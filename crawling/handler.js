@@ -14,6 +14,7 @@ module.exports.hello = async (event) => {
       headers: config,
       url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text}`,
     });
+    console.log(data.translated_text[0][0]);
     return data.translated_text[0][0];
   };
 
@@ -23,18 +24,21 @@ module.exports.hello = async (event) => {
   const $ = cheerio.load(data);
   const list = $("div.sp-qa-top-stories")
     .children("div.gel-layout__item")
-    .find("a");
-  const listArray = await list.toArray().map(async (element) => ({
-    text: $(element).find("h3").text(),
-    href: `https://www.bbc.com${$(element).attr("href")}`,
-    translated_text: await translate($(element).find("h3").text()),
-  }));
+    .find("h3");
+  const listArray = list.toArray().map((item) => {
+    const text = $(item).text();
+    return {
+      text: text,
+      href: `https://www.bbc.com${$(item).parent().attr("href")}`,
+      translated_text: translate(text),
+    };
+  });
 
   return {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: `${listArray[0]}, ${listArray[0].href}, ${listArray[0].translated_text}`,
+        message: listArray[0].translated_text,
         input: event,
       },
       null,
