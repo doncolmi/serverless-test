@@ -1,0 +1,35 @@
+service: soccer
+frameworkVersion: "2"
+
+package:
+  include:
+    - src
+provider:
+  name: aws
+  runtime: nodejs12.x
+  timeout: 30
+  environment:
+    NODE_ENV: development
+
+functions:
+  hello:
+    handler: src/handler.hello
+    events:
+      - http:
+          path: hello/get
+          method: get
+  createUser:
+    handler: src/user.createUser
+    events:
+      - http:
+          path: v1/user
+          method: post
+  syncUser:
+    handler: src/user.syncUser
+    events:
+      - http:
+          path: v1/sync
+          method: get
+
+plugins:
+  - serverless-offline

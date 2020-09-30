@@ -1,0 +1,28 @@
+{
+  "title": "user",
+  "type": "object",
+  "description": "createUser validation",
+  "properties": {
+    "uuid": {
+      "type": "string",
+      "title": "The UUID Schema"
+    },
+    "email": {
+      "type": "string",
+      "pattern": "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$",
+      "title": "The Email Schema"
+    },
+    "name": {
+      "type": "string",
+      "title": "The Name Schema"
+    },
+    "pwd": {
+      "type": "string",
+      "title": "The Password Schema"
+    },
+    "salt": {
+      "type": "string",
+      "title": "The Salt Schema"
+    }
+  }
+}
