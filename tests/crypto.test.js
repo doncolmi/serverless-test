@@ -7,7 +7,7 @@ const { secretKey, mail_id, mail_pw } = require("../src/config/env.json")[
 
 const mockUser = {
   uuid: "4896d3b55a0fcf5bbd87e8f902940fcb",
-  email: "matathresh1740@naver.com",
+  email: mail_id,
   name: "대성",
   pwd:
     "X0SMlDwY5v557qMiU0elH7NXhLU3oCPxDFR1qb6MDsJziCajK1qRwsevK73P4qZmCWpa3mfnccxYi9725qm4QQ==",
