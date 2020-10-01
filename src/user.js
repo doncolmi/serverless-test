@@ -68,7 +68,8 @@ module.exports.createUser = async function (event, context, callback) {
 
   try {
     await user.create(data);
-    await userSetting.create({ uuid: data.uuid });
+    await userSetting.create({ uuid: data.uuid, createdUuid: data.uuid });
+    const certificateURL = `http://localhost:3000/dev/v1/user/auth?code=${data.uuid}`;
     const config = {
       service: "gmail",
       host: "smtp.gmail.com",
@@ -84,7 +85,7 @@ module.exports.createUser = async function (event, context, callback) {
       to: data.email,
       subject: "Soccer 인증 메일입니다.",
       text: "wow...!",
-      html: `<a href="http://localhost:3000/dev/v1/user/auth">아이디 인증 하기</a>`,
+      html: `<a href=${certificateURL}>아이디 인증 하기</a>`,
     };
     const mail = nodemailer.createTransport(config);
     mail.sendMail(mailInfo);
@@ -92,6 +93,38 @@ module.exports.createUser = async function (event, context, callback) {
   } catch (e) {
     console.log(e);
     const errorText = "Couldn't create the order, Error inserting into DB";
+    await failCallback(callback, e.statusCode, errorText, e);
+  }
+};
+
+module.exports.certificateUser = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+  try {
+    const userCode = event.queryStringParameters.code;
+    const checkForCertificate = await userSetting.findAll({
+      where: { uuid: userCode },
+      attributes: ["isCertificate"],
+    });
+    if (checkForCertificate) {
+      const { isCertificate } = checkForCertificate[0].dataValues;
+      if (isCertificate === false) {
+        await userSetting.update(
+          {
+            isCertificate: 1,
+            modifiedUuid: userCode,
+            modifiedDate: Date.now(),
+          },
+          { where: { uuid: userCode } }
+        );
+        await succesCallback(callback, 200, "Updated!", true);
+      } else {
+        const errorText = "this user was certificated";
+        await failCallback(callback, 500, errorText, "");
+      }
+    }
+  } catch (e) {
+    console.log(e);
+    const errorText = "Couldn't update";
     await failCallback(callback, e.statusCode, errorText, e);
   }
 };

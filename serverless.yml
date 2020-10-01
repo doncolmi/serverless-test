@@ -8,16 +8,21 @@ provider:
   name: aws
   runtime: nodejs12.x
   timeout: 30
+  region: ap-northeast-2
   environment:
     NODE_ENV: development
 
 functions:
-  hello:
-    handler: src/handler.hello
+  certificateUser:
+    handler: src/user.certificateUser
     events:
       - http:
-          path: hello/get
+          path: v1/user/auth
           method: get
+          request:
+            parameters:
+              querystrings:
+                code: true
   createUser:
     handler: src/user.createUser
     events:
