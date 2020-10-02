@@ -20,20 +20,6 @@ const {
   failCallback,
 } = require("./middleware/callbackMiddleware");
 
-module.exports.syncUser = async function (event, context, callback) {
-  context.callbackWaitsForEmptyEventLoop = false;
-
-  try {
-    await user.sync();
-    await userSetting.sync();
-    await succesCallback(callback, 201, "Created!", true);
-  } catch (e) {
-    console.log(e);
-    const errorText = "Couldn't create the order, Error inserting into DB";
-    await failCallback(callback, e.statusCode, errorText, e);
-  }
-};
-
 module.exports.createUser = async function (event, context, callback) {
   context.callbackWaitsForEmptyEventLoop = false;
 

@@ -29,11 +29,23 @@ functions:
       - http:
           path: v1/user
           method: post
-  syncUser:
-    handler: src/user.syncUser
+  syncDB:
+    handler: src/sync.syncDB
     events:
       - http:
           path: v1/sync
+          method: get
+  bbc:
+    handler: src/crawling.bbcFootBall
+    events:
+      - http:
+          path: v1/bbc
+          method: get
+  sky:
+    handler: src/crawling.skyFootBall
+    events:
+      - http:
+          path: v1/sky
           method: get
 
 plugins:
