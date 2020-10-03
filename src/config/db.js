@@ -10,6 +10,7 @@ const sequelize = new Sequelize(env.database, env.username, env.password, {
   port: env.port,
   logging: env.logging, // 람다 실행시 로깅 활성화하면 시간이 오래걸려요...
   dialect: env.dialect,
+  timezone: "Etc/GMT-9",
   define: {
     timestamps: false,
   },
@@ -19,10 +20,6 @@ const sequelize = new Sequelize(env.database, env.username, env.password, {
     min: 0,
     acquire: 20000,
     idle: 10000,
-  },
-  dialectOptions: {
-    useUTC: false,
-    timezone: "Etc/GMT+9",
   },
 });
 

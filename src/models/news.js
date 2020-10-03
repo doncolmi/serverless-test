@@ -20,7 +20,7 @@ module.exports = function (sequelize, DataTypes) {
       unique: true,
     },
     date: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.DATE,
       allowNull: false,
     },
     tag: {

@@ -47,6 +47,12 @@ functions:
       - http:
           path: v1/sky
           method: get
+  goal:
+    handler: src/crawling.goalFootBall
+    events:
+      - http:
+          path: v1/goal
+          method: get
 
 plugins:
   - serverless-offline
