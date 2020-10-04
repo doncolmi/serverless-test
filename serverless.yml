@@ -53,6 +53,42 @@ functions:
       - http:
           path: v1/goal
           method: get
+  getNews:
+    handler: src/news.get
+    events:
+      - http:
+          path: v1/news/{newsId}
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
+  getRecentNews:
+    handler: src/news.getRecentNews
+    events:
+      - http:
+          path: v1/news/recent
+          method: get
+  getNewsList:
+    handler: src/news.getNewsList
+    events:
+      - http:
+          path: v1/news
+          method: get
+          request:
+            parameters:
+              querystrings:
+                page: false
+  getReply:
+    handler: src/news.getReply
+    events:
+      - http:
+          path: v1/news/{newsId}/reply
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
 
 plugins:
   - serverless-offline

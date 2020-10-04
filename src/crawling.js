@@ -37,7 +37,10 @@ module.exports.bbcFootBall = async (event, context, callback) => {
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text}`,
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
+        "&",
+        "and"
+      )}`,
     });
     return data.translated_text[0][0];
   }
@@ -74,10 +77,10 @@ module.exports.bbcFootBall = async (event, context, callback) => {
             newsElem.find("span.qa-status-date-output").text()
           ),
           topic: site.topic,
-          tag: "BBC",
+          tag: "BBC|번역제목",
         };
         news.create(newsData).catch((err) => {
-          console.log("couldn't save News, Error : "), err.message;
+          console.log("couldn't save News, Error : ", err.message);
         });
       });
     });
@@ -119,7 +122,10 @@ module.exports.skyFootBall = async (event, context, callback) => {
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text}`,
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
+        "&",
+        "and"
+      )}`,
     });
     return data.translated_text[0][0];
   }
@@ -155,10 +161,10 @@ module.exports.skyFootBall = async (event, context, callback) => {
         translatedTitle: await translate(title),
         date: calculatedDate(newsElem.find("span.label__timestamp").text()),
         topic: newsElem.find("a.label__tag").text(),
-        tag: "SkySports",
+        tag: "Sky|번역제목",
       };
       news.create(newsData).catch((err) => {
-        console.log("couldn't save News, Error : "), err.message;
+        console.log("couldn't save News, Error : ", err.message);
       });
     });
   } catch (e) {
@@ -181,8 +187,9 @@ module.exports.goalFootBall = async (event, context, callback) => {
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${encodeURI(
-        text
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
+        "&",
+        "and"
       )}`,
     });
     return data.translated_text[0][0];
@@ -215,7 +222,6 @@ module.exports.goalFootBall = async (event, context, callback) => {
       .find("tr")
       .find("td.widget-news-card__content")
       .toArray();
-    console.log($(list[0]).find("div.widget-news-card__date").text());
     prevHour =
       $(list[0])
         .find("div.widget-news-card__date")
@@ -223,10 +229,14 @@ module.exports.goalFootBall = async (event, context, callback) => {
         .trim()
         .split(" ")[0]
         .split(":")[0] * 1;
-    console.log("prevHour? : ", prevHour);
+
     for (const element of list) {
       const newsElem = $(element);
-      const href = `https://www.goal.com${newsElem.find("a").attr("href")}`;
+      const href = `https://www.goal.com${newsElem
+        .find("a")
+        .attr("href")
+        .replace("http://www.goal.com", "")
+        .replace("https://www.goal.com", "")}`;
       if ((await news.count({ where: { href: href } })) > 0) break;
       const title = newsElem.find("h3").attr("title");
       const newsData = {
@@ -236,12 +246,14 @@ module.exports.goalFootBall = async (event, context, callback) => {
         date: calculatedDate(
           newsElem.find("div.widget-news-card__date").text().trim()
         ),
-        topic: newsElem.find("a.widget-news-card__category").attr("title"),
-        tag: "Goal",
+        topic: newsElem
+          .find("a.widget-news-card__category")
+          .attr("title")
+          .trim(),
+        tag: "Goal|번역제목",
       };
-
       news.create(newsData).catch((err) => {
-        console.log("couldn't save News, Error : "), err.message;
+        console.log("couldn't save News, Error : ", err.message);
       });
     }
   } catch (e) {

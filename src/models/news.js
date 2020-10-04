@@ -7,7 +7,7 @@ module.exports = function (sequelize, DataTypes) {
       allowNull: false,
     },
     topic: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     translatedTitle: {
@@ -26,6 +26,11 @@ module.exports = function (sequelize, DataTypes) {
     tag: {
       type: DataTypes.STRING(300),
       allowNull: true,
+    },
+    reply: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     createdDate: {
       type: DataTypes.DATE,

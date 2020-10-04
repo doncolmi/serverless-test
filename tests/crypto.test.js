@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const axios = require("axios");
+const cheerio = require("cheerio");
 const { secretKey, mail_id, mail_pw } = require("../src/config/env.json")[
   "development"
 ];
