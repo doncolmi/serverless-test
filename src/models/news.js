@@ -27,6 +27,11 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING(300),
       allowNull: true,
     },
+    view: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     reply: {
       type: DataTypes.INTEGER,
       allowNull: false,

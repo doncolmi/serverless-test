@@ -23,6 +23,12 @@ functions:
             parameters:
               querystrings:
                 code: true
+  login:
+    handler: src/auth.login
+    events:
+      - http:
+          path: v1/auth/login
+          method: get
   createUser:
     handler: src/user.createUser
     events:

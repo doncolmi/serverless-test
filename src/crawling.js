@@ -34,13 +34,11 @@ module.exports.bbcFootBall = async (event, context, callback) => {
   }
 
   async function translate(text) {
+    const enText = encodeURI(text.replace("&", "and"));
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
-        "&",
-        "and"
-      )}`,
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${enText}`,
     });
     return data.translated_text[0][0];
   }
@@ -77,7 +75,7 @@ module.exports.bbcFootBall = async (event, context, callback) => {
             newsElem.find("span.qa-status-date-output").text()
           ),
           topic: site.topic,
-          tag: "BBC|번역제목",
+          tag: "BBC|해외뉴스|AI번역",
         };
         news.create(newsData).catch((err) => {
           console.log("couldn't save News, Error : ", err.message);
@@ -104,7 +102,7 @@ module.exports.skyFootBall = async (event, context, callback) => {
       .trim()
       .split(":");
     const day = date.slice(0, 8).split("/");
-    if (time[0] === "12" && ampm === "pm") time[0] = 0;
+    if (time[0] === "12" && ampm === "am") time[0] = 0;
     else if (ampm === "pm") time[0] = time[0] * 1 + 12;
     const newDate = new Date(
       2000 + day[2] * 1,
@@ -119,13 +117,11 @@ module.exports.skyFootBall = async (event, context, callback) => {
     return newDate;
   }
   async function translate(text) {
+    const enText = encodeURI(text.replace("&", "and"));
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
-        "&",
-        "and"
-      )}`,
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${enText}`,
     });
     return data.translated_text[0][0];
   }
@@ -161,7 +157,7 @@ module.exports.skyFootBall = async (event, context, callback) => {
         translatedTitle: await translate(title),
         date: calculatedDate(newsElem.find("span.label__timestamp").text()),
         topic: newsElem.find("a.label__tag").text(),
-        tag: "Sky|번역제목",
+        tag: "Sky|해외뉴스|AI번역",
       };
       news.create(newsData).catch((err) => {
         console.log("couldn't save News, Error : ", err.message);
@@ -184,13 +180,11 @@ module.exports.goalFootBall = async (event, context, callback) => {
   };
 
   async function translate(text) {
+    const enText = encodeURI(text.replace("&", "and"));
     const { data } = await axios({
       method: "GET",
       headers: config,
-      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${text.replace(
-        "&",
-        "and"
-      )}`,
+      url: `https://dapi.kakao.com/v2/translation/translate?src_lang=en&target_lang=kr&query=${enText}`,
     });
     return data.translated_text[0][0];
   }
@@ -250,7 +244,7 @@ module.exports.goalFootBall = async (event, context, callback) => {
           .find("a.widget-news-card__category")
           .attr("title")
           .trim(),
-        tag: "Goal|번역제목",
+        tag: "Goal|해외뉴스|AI번역",
       };
       news.create(newsData).catch((err) => {
         console.log("couldn't save News, Error : ", err.message);

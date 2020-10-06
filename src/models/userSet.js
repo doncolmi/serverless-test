@@ -5,15 +5,15 @@ const user = require("./user")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
   const UserSetting = sequelize.define("UserSetting", {
-    isCertificate: {
+    isChangeName: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false,
+      defaultValue: 0,
     },
     isViewReply: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true,
+      defaultValue: 1,
     },
     createdDate: {
       type: DataTypes.DATE,

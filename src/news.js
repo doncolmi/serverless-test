@@ -2,6 +2,14 @@ const db = require("./config/db");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
 const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
 
+module.exports.newsAllCount = async function (event, context, callback) {
+  try {
+    // todo: 여기 만들고 있었음 react 구조하고 생각해보자
+  } catch (e) {
+    callback(e);
+  }
+};
+
 module.exports.getRecentNews = async function (event, context, callback) {
   try {
     const getNews = await news.findAll({
@@ -56,6 +64,7 @@ module.exports.getNewsList = async function (event, context, callback) {
         "href",
         "date",
         "tag",
+        "view",
       ],
     });
 
