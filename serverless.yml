@@ -85,6 +85,12 @@ functions:
             parameters:
               querystrings:
                 page: false
+  getNewsCnt:
+    handler: src/news.newsAllCount
+    events:
+      - http:
+          path: v1/news/cnt
+          method: get
   getReply:
     handler: src/news.getReply
     events:

@@ -102,8 +102,9 @@ module.exports.skyFootBall = async (event, context, callback) => {
       .trim()
       .split(":");
     const day = date.slice(0, 8).split("/");
-    if (time[0] === "12" && ampm === "am") time[0] = 0;
-    else if (ampm === "pm") time[0] = time[0] * 1 + 12;
+    if (time[0] === "12") {
+      ampm === "am" ? (time[0] = 0) : (time[0] = 12);
+    } else if (ampm === "pm") time[0] = time[0] * 1 + 12;
     const newDate = new Date(
       2000 + day[2] * 1,
       day[1] * 1 - 1,

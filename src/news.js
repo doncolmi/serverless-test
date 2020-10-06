@@ -4,7 +4,12 @@ const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
 
 module.exports.newsAllCount = async function (event, context, callback) {
   try {
-    // todo: 여기 만들고 있었음 react 구조하고 생각해보자
+    const cntNews = await news.count({});
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cntNews),
+    });
   } catch (e) {
     callback(e);
   }
@@ -51,6 +56,9 @@ module.exports.getNewsList = async function (event, context, callback) {
     if (event.queryStringParameters.page) {
       page = event.queryStringParameters.page * 1;
     }
+    const cnt = await news.count({});
+    const maxPage = parseInt(cnt / 10);
+    if (page > maxPage) page = maxPage;
 
     const getNews = await news.findAll({
       offset: page * 10,
@@ -64,6 +72,7 @@ module.exports.getNewsList = async function (event, context, callback) {
         "href",
         "date",
         "tag",
+        "reply",
         "view",
       ],
     });
