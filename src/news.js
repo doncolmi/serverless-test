@@ -98,20 +98,9 @@ module.exports.getNewsList = async function (event, context, callback) {
 module.exports.get = async function (event, context, callback) {
   try {
     const newsId = event.pathParameters.newsId;
-    const getNews = await news.findAll({
-      where: { id: newsId },
-      attributes: [
-        "id",
-        "translatedTitle",
-        "title",
-        "topic",
-        "href",
-        "date",
-        "tag",
-        "modifiedDate",
-      ],
-    });
-    if (getNews.length > 0) {
+    const getNews = await news.findOne({ where: { id: newsId } });
+    if (getNews) {
+      await news.update({ view: getNews.view + 1 }, { where: { id: newsId } });
       callback(null, {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },

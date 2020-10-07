@@ -4,6 +4,11 @@ frameworkVersion: "2"
 package:
   include:
     - src
+
+plugins:
+  - serverless-offline
+  - serverless-api-compression
+
 provider:
   name: aws
   runtime: nodejs12.x
@@ -11,6 +16,9 @@ provider:
   region: ap-northeast-2
   environment:
     NODE_ENV: development
+
+custom:
+  contentCompression: 1024
 
 functions:
   certificateUser:
@@ -101,6 +109,3 @@ functions:
             parameters:
               paths:
                 newsId: true
-
-plugins:
-  - serverless-offline

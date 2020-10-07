@@ -16,6 +16,7 @@
     "mariadb": "^2.4.2",
     "nodemailer": "^6.4.11",
     "sequelize": "^6.3.5",
+    "serverless-api-compression": "^1.0.1",
     "uuid4": "^2.0.2"
   },
   "devDependencies": {

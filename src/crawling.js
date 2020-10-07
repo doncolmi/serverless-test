@@ -139,13 +139,6 @@ module.exports.skyFootBall = async (event, context, callback) => {
     const list = $("div.news-list")
       .children("div.news-list__item")
       .find("div.news-list__body");
-    const hrefCheck = $(list[0])
-      .find("a.news-list__headline-link")
-      .attr("href");
-    if ((await news.count({ where: { href: hrefCheck } })) > 0) {
-      succesCallback(callback, 302, "There is no new news.", true);
-      return;
-    }
 
     list.toArray().map(async (element) => {
       const newsElem = $(element);
