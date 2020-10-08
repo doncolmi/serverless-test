@@ -135,6 +135,20 @@ module.exports.getReply = async function (event, context, callback) {
   }
 };
 
+module.exports.getReplyCnt = async function (event, context, callback) {
+  try {
+    const newsId = event.pathParameters.newsId;
+    const cntNews = await newsReply.count({ where: { newsId: newsId } });
+    await callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cntNews),
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
 module.exports.postReply = async function (event, context, callback) {
   try {
     if (!event.headers.Authorization) {
@@ -149,7 +163,7 @@ module.exports.postReply = async function (event, context, callback) {
     const body = JSON.parse(event.body);
     const save = await newsReply.create(body);
     const update = await news.update(
-      { reply: +1 },
+      { reply: db.sequelize.literal("reply + 1") },
       { where: { id: body.newsId } }
     );
 

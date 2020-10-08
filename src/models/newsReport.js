@@ -18,5 +18,5 @@ module.exports = function (sequelize, DataTypes) {
   });
   user.hasMany(NewsReport);
   newsReply.hasMany(NewsReport);
-  return NewsReplyScore;
+  return NewsReport;
 };

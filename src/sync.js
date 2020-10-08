@@ -7,10 +7,7 @@ const newsReplyScore = require("./models/newsReplyScore")(
   db.sequelize,
   db.Sequelize
 );
-const newsReport = require("./models/newsReplyScore")(
-  db.sequelize,
-  db.Sequelize
-);
+const newsReport = require("./models/newsReport")(db.sequelize, db.Sequelize);
 
 const {
   succesCallback,

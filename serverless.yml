@@ -115,6 +115,16 @@ functions:
             parameters:
               paths:
                 newsId: true
+  getReplyCnt:
+    handler: src/news.getReplyCnt
+    events:
+      - http:
+          path: v1/news/{newsId}/reply/cnt
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
   postReply:
     handler: src/news.postReply
     events:
