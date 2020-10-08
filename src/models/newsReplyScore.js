@@ -6,6 +6,10 @@ const newsReply = require("./newsReply")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
   const NewsReplyScore = sequelize.define("newsReplyScore", {
+    type: {
+      type: DataTypes.TINYINT(1),
+      allowNull: false,
+    },
     createdDate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

@@ -134,3 +134,31 @@ module.exports.getReply = async function (event, context, callback) {
     callback(e);
   }
 };
+
+module.exports.postReply = async function (event, context, callback) {
+  try {
+    if (!event.headers.Authorization) {
+      callback(null, {
+        statusCode: 403,
+        headers: { "Content-Type": "text/plain" },
+        body: "403 - Forbidden",
+      });
+      return;
+    }
+
+    const body = JSON.parse(event.body);
+    const save = await newsReply.create(body);
+    const update = await news.update(
+      { reply: +1 },
+      { where: { id: body.newsId } }
+    );
+
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(save),
+    });
+  } catch (e) {
+    callback(e);
+  }
+};

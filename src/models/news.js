@@ -14,6 +14,10 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING(200),
       allowNull: true,
     },
+    prevTitle: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
     href: {
       type: DataTypes.STRING(256),
       allowNull: false,

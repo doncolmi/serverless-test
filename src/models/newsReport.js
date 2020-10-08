@@ -5,7 +5,7 @@ const user = require("./user")(db.sequelize, db.Sequelize);
 const newsReply = require("./newsReply")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
-  const NewsReplyScore = sequelize.define("newsReplyScore", {
+  const NewsReport = sequelize.define("newsReport", {
     type: {
       type: DataTypes.STRING(50),
       allowNull: false,
@@ -16,7 +16,7 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: DataTypes.NOW,
     },
   });
-  user.hasMany(NewsReplyScore, { foreignKey: "createdUuid" });
-  newsReply.hasMany(NewsReplyScore, { foreignKey: "newsReplyId" });
+  user.hasMany(NewsReport);
+  newsReply.hasMany(NewsReport);
   return NewsReplyScore;
 };

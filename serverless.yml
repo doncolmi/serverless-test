@@ -31,6 +31,12 @@ functions:
             parameters:
               querystrings:
                 code: true
+  auth:
+    handler: src/auth.auth
+    events:
+      - http:
+          path: v1/auth
+          method: post
   login:
     handler: src/auth.login
     events:
@@ -109,3 +115,9 @@ functions:
             parameters:
               paths:
                 newsId: true
+  postReply:
+    handler: src/news.postReply
+    events:
+      - http:
+          path: v1/news/reply
+          method: post

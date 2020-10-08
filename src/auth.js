@@ -1,6 +1,9 @@
 const db = require("./config/db");
-const { kakao } = require("./config/env.json")["development"];
+const { kakao, kakao_secret, kakao_js } = require("./config/env.json")[
+  "development"
+];
 const user = require("./models/user")(db.sequelize, db.Sequelize);
+const userSet = require("./models/userSet")(db.sequelize, db.Sequelize);
 
 const axios = require("axios");
 const uuid = require("uuid4");
@@ -21,14 +24,21 @@ module.exports.login = async (event, context, callback) => {
   });
 
   if (data.id) {
-    const userData = await user.findOrCreate({
+    const getUser = await user.findOrCreate({
       where: { uuid: data.id },
       defaults: { name: makeRandomName(), createdUuid: data.id },
     });
+    const userInfo = getUser[0].dataValues;
+    const isJoin = getUser[1];
+    const getUserSet = await userSet.findOrCreate({
+      where: { uuid: data.id },
+      defaults: { createdUuid: data.id },
+    });
+    const userSetInfo = getUserSet[0].dataValues;
     await succesCallback(
       callback,
-      userData[1] ? 201 : 200,
-      JSON.stringify(userData[0].dataValues),
+      isJoin ? 201 : 200,
+      JSON.stringify({ ...userInfo, ...userSetInfo }),
       false
     );
   } else {

@@ -6,12 +6,12 @@ const user = require("./user")(db.sequelize, db.Sequelize);
 module.exports = function (sequelize, DataTypes) {
   const UserSetting = sequelize.define("UserSetting", {
     isChangeName: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TINYINT(1),
       allowNull: false,
       defaultValue: 0,
     },
     isViewReply: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TINYINT(1),
       allowNull: false,
       defaultValue: 1,
     },

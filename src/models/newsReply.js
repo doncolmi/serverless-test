@@ -27,16 +27,13 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    isIssueEnd: {
-      type: DataTypes.BOOLEAN,
-      allowNull: true,
-    },
     isSelection: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TINYINT(1),
       allowNull: true,
+      defaultValue: 0,
     },
     isBlocked: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TINYINT(1),
       allowNull: false,
       defaultValue: 0,
     },
