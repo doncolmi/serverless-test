@@ -1,6 +1,10 @@
 const db = require("./config/db");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
 const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
+const newsReplyScore = require("./models/newsReplyScore")(
+  db.sequelize,
+  db.Sequelize
+);
 
 module.exports.newsAllCount = async function (event, context, callback) {
   try {
@@ -123,9 +127,9 @@ module.exports.getReply = async function (event, context, callback) {
     const newsId = event.pathParameters.newsId;
     const getNews = await newsReply.findAll({
       where: { newsId: newsId },
-      order: [["createdDate", "DESC"]],
+      order: [["createdDate", "ASC"]],
     });
-    callback(null, {
+    await callback(null, {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(getNews),
@@ -171,6 +175,69 @@ module.exports.postReply = async function (event, context, callback) {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(save),
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+module.exports.replyScore = async function (event, context, callback) {
+  try {
+    if (!event.headers.Authorization) {
+      callback(null, {
+        statusCode: 403,
+        headers: { "Content-Type": "text/plain" },
+        body: "403 - Forbidden",
+      });
+      return;
+    }
+
+    // body
+    // uuid: string, replyId: string, type: booelan, newsId: string
+
+    const body = JSON.parse(event.body);
+    // 먼저 uuid를 통해 해당 댓글에 대해 점수를 부여한적이 있는지 체크 합니다.
+    const isScored = await newsReplyScore.count({
+      where: { createdUuid: body.createdUuid, newsReplyId: body.newsReplyId },
+    });
+    if (isScored > 0) {
+      callback(null, {
+        statusCode: 304,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Duplicate request" }),
+      });
+      return;
+    }
+
+    // news 스코어 조정
+    await newsReply.update(
+      { score: db.sequelize.literal(`score ${body.type ? "+" : "-"} 1`) },
+      { where: { id: body.newsReplyId } }
+    );
+    // 내용 저장
+    const save = await newsReplyScore.create(body);
+
+    await callback(null, {
+      statusCode: 201,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(save),
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+module.exports.getReplyScoreCnt = async function (event, context, callback) {
+  try {
+    const id = event.pathParameters.id;
+    const score = await newsReply.findOne({
+      where: { id: id },
+      attributes: ["score"],
+    });
+    await callback(null, {
+      statusCode: 201,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(score),
     });
   } catch (e) {
     callback(e);

@@ -16,7 +16,6 @@ module.exports = function (sequelize, DataTypes) {
     },
   });
   user.hasMany(NewsReplyScore, { foreignKey: "createdUuid" });
-  news.hasMany(NewsReplyScore, { foreignKey: "newsId" });
   newsReply.hasMany(NewsReplyScore, { foreignKey: "newsReplyId" });
   return NewsReplyScore;
 };

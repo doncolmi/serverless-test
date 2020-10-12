@@ -48,6 +48,10 @@ module.exports = function (sequelize, DataTypes) {
     modifiedUuid: {
       type: DataTypes.STRING(32),
     },
+    name: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+    },
   });
   User.hasMany(NewsReply);
   news.hasMany(NewsReply);

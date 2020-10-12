@@ -131,3 +131,19 @@ functions:
       - http:
           path: v1/news/reply
           method: post
+  getReplyScore:
+    handler: src/news.getReplyScoreCnt
+    events:
+      - http:
+          path: /v1/reply/{id}/score
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+  replyScore:
+    handler: src/news.replyScore
+    events:
+      - http:
+          path: /v1/news/reply/score
+          method: post
