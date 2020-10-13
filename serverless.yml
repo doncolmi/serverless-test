@@ -147,3 +147,19 @@ functions:
       - http:
           path: /v1/news/reply/score
           method: post
+  getNewsUserLink:
+    handler: src/news.getNewsUserLink
+    events:
+      - http:
+          path: /v1/news/{newsId}/link
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
+  test:
+    handler: src/s3.s3upload
+    events:
+      - http:
+          path: /v1/test
+          method: get

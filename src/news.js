@@ -1,10 +1,21 @@
+const { sequelize } = require("./config/db");
 const db = require("./config/db");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
 const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
+<<<<<<< HEAD
+<<<<<<< HEAD
 const newsReplyScore = require("./models/newsReplyScore")(
   db.sequelize,
   db.Sequelize
 );
+const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
+<<<<<<< HEAD
+=======
+>>>>>>> parent of 52e3c06... add post, get Reply
+=======
+>>>>>>> parent of 52e3c06... add post, get Reply
+=======
+>>>>>>> f259f98e996e359905f27cf6f939ec1082d99a69
 
 module.exports.newsAllCount = async function (event, context, callback) {
   try {
@@ -127,9 +138,9 @@ module.exports.getReply = async function (event, context, callback) {
     const newsId = event.pathParameters.newsId;
     const getNews = await newsReply.findAll({
       where: { newsId: newsId },
-      order: [["createdDate", "ASC"]],
+      order: [["createdDate", "DESC"]],
     });
-    await callback(null, {
+    callback(null, {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(getNews),
@@ -208,14 +219,58 @@ module.exports.replyScore = async function (event, context, callback) {
       });
       return;
     }
+    const save = await newsReplyScore.create(body);
+
+    // 만약 news 스코어가 딱 29이면서 타입이 +라면 업데이트 문을 수정합니다.
+    const { dataValues } = await newsReply.findOne({
+      where: { id: body.newsReplyId },
+      attributes: ["score", "type", "newsId", "item", "userUuid"],
+    });
+
+    const { score, type, item, userUuid, newsId } = dataValues;
+
+    if (score === 29 && body.type) {
+      if (type === "title") {
+        const newsData = await news.findOne({
+          where: { id: body.newsId },
+          attributes: ["tag", "translatedTitle"],
+        });
+        const { tag, translatedTitle } = newsData.dataValues;
+        await news.update(
+          {
+            translatedTitle: item,
+            modifiedUuid: userUuid,
+            modifiedDate: new Date(),
+            prevTitle: translatedTitle,
+            tag: tag.replace("AI번역", "유저번역"),
+          },
+          { where: { id: newsId } }
+        );
+      }
+      if (type !== "default") {
+        await newsEdit.create({
+          uuid: userUuid,
+          newsId: newsId,
+          item: item,
+          type: type,
+        });
+      }
+      await newsReply.update(
+        { isSelection: true },
+        { where: { id: body.newsReplyId } }
+      );
+    } else if (score === 30 && !body.type) {
+      await newsReply.update(
+        { isSelection: false },
+        { where: { id: body.newsReplyId } }
+      );
+    }
 
     // news 스코어 조정
     await newsReply.update(
       { score: db.sequelize.literal(`score ${body.type ? "+" : "-"} 1`) },
       { where: { id: body.newsReplyId } }
     );
-    // 내용 저장
-    const save = await newsReplyScore.create(body);
 
     await callback(null, {
       statusCode: 201,
@@ -238,6 +293,23 @@ module.exports.getReplyScoreCnt = async function (event, context, callback) {
       statusCode: 201,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(score),
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+module.exports.getNewsUserLink = async function (event, context, callback) {
+  try {
+    const id = event.pathParameters.newsId;
+    const items = await newsEdit.findAll({
+      where: { newsId: id, type: "link" },
+      attributes: ["item"],
+    });
+    await callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(items),
     });
   } catch (e) {
     callback(e);
