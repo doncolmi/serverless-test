@@ -6,9 +6,13 @@ const uuid = require("uuid4");
 const db = require("./config/db");
 const { kakao, aws, awsSecret } = require("./config/env.json")["development"];
 const news = require("./models/news")(db.sequelize, db.Sequelize);
+const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
+const newsContents = require("./models/newsContents")(
+  db.sequelize,
+  db.Sequelize
+);
 
 const AWS = require("aws-sdk");
-const fs = require("fs");
 const image = require("imagemin");
 const webp = require("imagemin-webp");
 
@@ -61,7 +65,9 @@ module.exports.bbcFootBall = async (event, context, callback) => {
   ];
 
   try {
-    bbclink.forEach(async (site) => {
+    let udtCnt = 0;
+    let errCnt = 0;
+    for (const site of bbclink) {
       const { data } = await axios.get(site.link).catch((e) => {
         errorCallback(e);
       });
@@ -120,15 +126,27 @@ module.exports.bbcFootBall = async (event, context, callback) => {
           thumbnail: key,
         };
 
-        await news.create(newsData).catch((err) => {
-          console.log("couldn't save News, Error : ", err.message);
-        });
+        news
+          .create(newsData)
+          .then(({ dataValues }) => {
+            newsContents.create({ newsId: dataValues.id });
+            udtCnt++;
+          })
+          .catch((err) => {
+            errCnt++;
+            console.log("couldn't save News, Error : ", err.message);
+          });
       }
-    });
+    }
+
+    succesCallback(
+      callback,
+      200,
+      `${udtCnt}개의 뉴스 업데이트, ${errCnt}개의 에러`,
+      true
+    );
   } catch (e) {
     errorCallback(e);
-  } finally {
-    succesCallback(callback, 200, "created News!", true);
   }
 };
 
@@ -181,11 +199,13 @@ module.exports.skyFootBall = async (event, context, callback) => {
 
     const list = $("div.news-list").children("div.news-list__item").toArray();
 
+    let udtCnt = 0;
+    let errCnt = 0;
+
     for (const element of list) {
       const newsElem = $(element);
       const textElem = newsElem.find("div.news-list__body");
       const pictureElem = newsElem.find("img").attr("data-src").split("?")[0];
-      console.log(pictureElem, "하하");
       const href = textElem.find("a.news-list__headline-link").attr("href");
       if ((await news.count({ where: { href: href } })) > 0) continue;
       const title = textElem.find("h4.news-list__headline").text().trim();
@@ -222,14 +242,25 @@ module.exports.skyFootBall = async (event, context, callback) => {
         thumbnail: key,
       };
 
-      await news.create(newsData).catch((err) => {
-        console.log("couldn't save News, Error : ", err.message);
-      });
+      news
+        .create(newsData)
+        .then(({ dataValues }) => {
+          newsContents.create({ newsId: dataValues.id });
+          udtCnt++;
+        })
+        .catch((err) => {
+          errCnt++;
+          console.log("couldn't save News, Error : ", err.message);
+        });
     }
+    succesCallback(
+      callback,
+      200,
+      `${udtCnt}개의 뉴스 업데이트, ${errCnt}개의 에러`,
+      true
+    );
   } catch (e) {
     errorCallback(e);
-  } finally {
-    succesCallback(callback, 200, "created News!", true);
   }
 };
 
@@ -294,7 +325,6 @@ module.exports.goalFootBall = async (event, context, callback) => {
         .find("td.widget-news-card__image > a > img")
         .attr("src")
         .split("?")[0];
-      console.log(pictureElem);
       const href = `https://www.goal.com${textElem
         .find("a")
         .attr("href")
@@ -341,7 +371,10 @@ module.exports.goalFootBall = async (event, context, callback) => {
       };
       news
         .create(newsData)
-        .then((res) => udtCnt++)
+        .then(({ dataValues }) => {
+          newsContents.create({ newsId: dataValues.id });
+          udtCnt++;
+        })
         .catch((err) => {
           errCnt++;
           console.log("couldn't save News, Error : ", err.message);
@@ -358,3 +391,5 @@ module.exports.goalFootBall = async (event, context, callback) => {
     errorCallback(e);
   }
 };
+
+// todo: 이제

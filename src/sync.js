@@ -9,6 +9,11 @@ const newsReplyScore = require("./models/newsReplyScore")(
 );
 const newsReport = require("./models/newsReport")(db.sequelize, db.Sequelize);
 const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
+const newsContents = require("./models/newsContents")(
+  db.sequelize,
+  db.Sequelize
+);
+const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
 
 const {
   succesCallback,
@@ -26,6 +31,8 @@ module.exports.syncDB = async function (event, context, callback) {
     await newsReplyScore.sync();
     await newsReport.sync();
     await newsEdit.sync();
+    await newsContents.sync();
+    await newsScore.sync();
     await succesCallback(callback, 201, "Created!", true);
   } catch (e) {
     console.log(e);

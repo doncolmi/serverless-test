@@ -1,13 +1,13 @@
 "use strict";
 const db = require("../config/db");
 
-const news = require("./user")(db.sequelize, db.Sequelize);
+const news = require("./news")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
   const NewsContents = sequelize.define("newsContents", {
     contents: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     score: {
       type: DataTypes.INTEGER,

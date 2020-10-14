@@ -14,6 +14,7 @@ const {
 } = require("./middleware/callbackMiddleware");
 
 module.exports.login = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
   const makeRandomName = () => uuid().split("-")[0];
 
   const token = event.headers.Authorization;

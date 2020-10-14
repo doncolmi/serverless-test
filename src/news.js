@@ -1,5 +1,6 @@
 const { sequelize } = require("./config/db");
 const db = require("./config/db");
+const newsScore = require("./models/newsScore");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
 const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
 const newsReplyScore = require("./models/newsReplyScore")(
@@ -7,6 +8,11 @@ const newsReplyScore = require("./models/newsReplyScore")(
   db.Sequelize
 );
 const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
+const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
+const newsContents = require("./models/newsContents")(
+  db.sequelize,
+  db.Sequelize
+);
 
 module.exports.newsAllCount = async function (event, context, callback) {
   try {
@@ -304,5 +310,67 @@ module.exports.getNewsUserLink = async function (event, context, callback) {
     });
   } catch (e) {
     callback(e);
+  }
+};
+
+// todo: getNewsScore 만들어야합니다!
+
+module.exports.postNewsScore = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  // body
+  // newsId, href, uuid => JSON.stringfy
+  const { newsId, href, uuid } = JSON.parse(event.body);
+
+  // duplicate check
+  const isDuplicate =
+    (await newsScore.count({ where: { newsId: newsId, uuid: uuid } })) < 1;
+  if (isDuplicate) {
+    callback(null, {
+      statusCode: 409,
+      headers: { "Content-Type": "text/plain" },
+      body: `Duplicate Vote`,
+    });
+  } else {
+    // newsScore check
+    try {
+      const NewsContent = await newsContents.findOne({
+        where: { newsId: newsId },
+      });
+      const { score, contents } = NewsContent.dataValues;
+
+      if (contents) {
+        callback(null, {
+          statusCode: 409,
+          headers: { "Content-Type": "text/plain" },
+          body: `Already finished`,
+        });
+      } else {
+        await newsContents.update(
+          {
+            score: db.sequelize.literal(`score + 1`),
+            modifiedUuid: uuid,
+            modifiedDate: new Date(),
+          },
+          { where: { newsId: newsId } }
+        );
+        await newsScore.create({ newsId: newsId, uuid: uuid });
+        if (score < 29) {
+          callback(null, {
+            statusCode: 201,
+            headers: { "Content-Type": "text/plain" },
+            body: `투표 성공!`,
+          });
+        } else {
+          callback(null, {
+            statusCode: 202,
+            headers: { "Content-Type": "text/plain" },
+            body: `투표가 완료되었습니다! 빠른 시간 내에 본문을 번역하여 가져오겠습니다!`,
+          });
+        }
+      }
+    } catch (e) {
+      callback(e);
+    }
   }
 };
