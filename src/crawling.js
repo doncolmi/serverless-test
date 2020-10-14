@@ -1,10 +1,22 @@
 "use strict";
 const axios = require("axios");
 const cheerio = require("cheerio");
+const uuid = require("uuid4");
 
 const db = require("./config/db");
-const { kakao } = require("./config/env.json")["development"];
+const { kakao, aws, awsSecret } = require("./config/env.json")["development"];
 const news = require("./models/news")(db.sequelize, db.Sequelize);
+
+const AWS = require("aws-sdk");
+const fs = require("fs");
+const image = require("imagemin");
+const webp = require("imagemin-webp");
+
+const s3 = new AWS.S3({
+  accessKeyId: aws,
+  secretAccessKey: awsSecret,
+  region: "ap-northeast-2",
+});
 
 const {
   succesCallback,
@@ -58,29 +70,60 @@ module.exports.bbcFootBall = async (event, context, callback) => {
 
       const list = $("div.sp-qa-top-stories")
         .children("div.gel-layout__item")
-        .find("div.gs-c-promo-body");
+        .find("div.gs-c-promo")
+        .toArray();
 
-      list.toArray().map(async (element) => {
+      for (const element of list) {
         const newsElem = $(element);
-        const href = `https://www.bbc.com${newsElem
+        const textElem = newsElem.find("div.gs-c-promo-body");
+        const pictureElem = newsElem
+          .find("img.qa-lazyload-image")
+          .attr("data-src")
+          .replace("{width}", "480");
+        const href = `https://www.bbc.com${textElem
           .find("a.gs-c-promo-heading")
           .attr("href")}`;
-        if ((await news.count({ where: { href: href } })) > 0) return "";
-        const title = newsElem.find("h3").text();
+        if ((await news.count({ where: { href: href } })) > 0) continue;
+        const title = textElem.find("h3").text();
+
+        // image crawling
+        const { data } = await axios({
+          url: pictureElem,
+          responseType: "arraybuffer",
+        });
+
+        const imageTrans = await image.buffer(data, {
+          plugins: [webp({ quality: 75 })],
+        });
+
+        const key = `${uuid()}.webp`;
+
+        const s3Params = {
+          Bucket: "thegreen-limc",
+          Key: key,
+          ContentType: "image/webp",
+          ACL: "public-read",
+          Body: imageTrans,
+        };
+
+        await s3.upload(s3Params).promise();
+
         const newsData = {
           href: href,
           title: title,
           translatedTitle: await translate(title),
           date: calculatedDate(
-            newsElem.find("span.qa-status-date-output").text()
+            textElem.find("span.qa-status-date-output").text()
           ),
           topic: site.topic,
           tag: "BBC|해외뉴스|AI번역",
+          thumbnail: key,
         };
-        news.create(newsData).catch((err) => {
+
+        await news.create(newsData).catch((err) => {
           console.log("couldn't save News, Error : ", err.message);
         });
-      });
+      }
     });
   } catch (e) {
     errorCallback(e);
@@ -136,27 +179,53 @@ module.exports.skyFootBall = async (event, context, callback) => {
 
     const $ = cheerio.load(data);
 
-    const list = $("div.news-list")
-      .children("div.news-list__item")
-      .find("div.news-list__body");
+    const list = $("div.news-list").children("div.news-list__item").toArray();
 
-    list.toArray().map(async (element) => {
+    for (const element of list) {
       const newsElem = $(element);
-      const href = newsElem.find("a.news-list__headline-link").attr("href");
-      if ((await news.count({ where: { href: href } })) > 0) return "";
-      const title = newsElem.find("h4.news-list__headline").text().trim();
+      const textElem = newsElem.find("div.news-list__body");
+      const pictureElem = newsElem.find("img").attr("data-src").split("?")[0];
+      console.log(pictureElem, "하하");
+      const href = textElem.find("a.news-list__headline-link").attr("href");
+      if ((await news.count({ where: { href: href } })) > 0) continue;
+      const title = textElem.find("h4.news-list__headline").text().trim();
+
+      // image crawling
+      const { data } = await axios({
+        url: pictureElem,
+        responseType: "arraybuffer",
+      });
+
+      const imageTrans = await image.buffer(data, {
+        plugins: [webp({ quality: 75 })],
+      });
+
+      const key = `${uuid()}.webp`;
+
+      const s3Params = {
+        Bucket: "thegreen-limc",
+        Key: key,
+        ContentType: "image/webp",
+        ACL: "public-read",
+        Body: imageTrans,
+      };
+
+      await s3.upload(s3Params).promise();
+
       const newsData = {
         href: href,
         title: title,
         translatedTitle: await translate(title),
-        date: calculatedDate(newsElem.find("span.label__timestamp").text()),
-        topic: newsElem.find("a.label__tag").text(),
+        date: calculatedDate(textElem.find("span.label__timestamp").text()),
+        topic: textElem.find("a.label__tag").text(),
         tag: "Sky|해외뉴스|AI번역",
+        thumbnail: key,
       };
-      news.create(newsData).catch((err) => {
+
+      await news.create(newsData).catch((err) => {
         console.log("couldn't save News, Error : ", err.message);
       });
-    });
+    }
   } catch (e) {
     errorCallback(e);
   } finally {
@@ -208,7 +277,6 @@ module.exports.goalFootBall = async (event, context, callback) => {
     const list = $("table.widget-news-card")
       .children("tbody")
       .find("tr")
-      .find("td.widget-news-card__content")
       .toArray();
     prevHour =
       $(list[0])
@@ -217,36 +285,76 @@ module.exports.goalFootBall = async (event, context, callback) => {
         .trim()
         .split(" ")[0]
         .split(":")[0] * 1;
-
+    let udtCnt = 0;
+    let errCnt = 0;
     for (const element of list) {
       const newsElem = $(element);
-      const href = `https://www.goal.com${newsElem
+      const textElem = newsElem.find("td.widget-news-card__content");
+      const pictureElem = newsElem
+        .find("td.widget-news-card__image > a > img")
+        .attr("src")
+        .split("?")[0];
+      console.log(pictureElem);
+      const href = `https://www.goal.com${textElem
         .find("a")
         .attr("href")
         .replace("http://www.goal.com", "")
         .replace("https://www.goal.com", "")}`;
-      if ((await news.count({ where: { href: href } })) > 0) break;
-      const title = newsElem.find("h3").attr("title");
+      if ((await news.count({ where: { href: href } })) > 0) continue;
+      const title = textElem.find("h3").attr("title");
+
+      // image crawling
+      const { data } = await axios({
+        url: pictureElem,
+        responseType: "arraybuffer",
+      });
+
+      const imageTrans = await image.buffer(data, {
+        plugins: [webp({ quality: 75 })],
+      });
+
+      const key = `${uuid()}.webp`;
+
+      const s3Params = {
+        Bucket: "thegreen-limc",
+        Key: key,
+        ContentType: "image/webp",
+        ACL: "public-read",
+        Body: imageTrans,
+      };
+
+      await s3.upload(s3Params).promise();
+
       const newsData = {
         href: href,
         title: title,
         translatedTitle: await translate(title),
         date: calculatedDate(
-          newsElem.find("div.widget-news-card__date").text().trim()
+          textElem.find("div.widget-news-card__date").text().trim()
         ),
-        topic: newsElem
+        topic: textElem
           .find("a.widget-news-card__category")
           .attr("title")
           .trim(),
         tag: "Goal|해외뉴스|AI번역",
+        thumbnail: key,
       };
-      news.create(newsData).catch((err) => {
-        console.log("couldn't save News, Error : ", err.message);
-      });
+      news
+        .create(newsData)
+        .then((res) => udtCnt++)
+        .catch((err) => {
+          errCnt++;
+          console.log("couldn't save News, Error : ", err.message);
+        });
     }
+
+    succesCallback(
+      callback,
+      200,
+      `${udtCnt}개의 뉴스 업데이트, ${errCnt}개의 에러`,
+      true
+    );
   } catch (e) {
     errorCallback(e);
-  } finally {
-    succesCallback(callback, 200, "created News!", true);
   }
 };

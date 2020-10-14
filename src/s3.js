@@ -12,7 +12,6 @@ module.exports.s3upload = async (event, context, callback) => {
     secretAccessKey: awsSecret,
     region: "ap-northeast-2",
   });
-
   const url =
     "https://images.daznservices.com/di/library/GOAL/3c/d2/rodrygo-real-madrid-2019-20_1krmc78bpasvi1jiabf3i0m18b.jpg?";
 
@@ -36,6 +35,6 @@ module.exports.s3upload = async (event, context, callback) => {
   await callback(null, {
     statusCode: 200,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ wow: "hello" }),
+    body: JSON.stringify(hi.Location),
   });
 };

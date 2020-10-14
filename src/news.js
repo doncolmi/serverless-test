@@ -2,20 +2,11 @@ const { sequelize } = require("./config/db");
 const db = require("./config/db");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
 const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
-<<<<<<< HEAD
-<<<<<<< HEAD
 const newsReplyScore = require("./models/newsReplyScore")(
   db.sequelize,
   db.Sequelize
 );
 const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
-<<<<<<< HEAD
-=======
->>>>>>> parent of 52e3c06... add post, get Reply
-=======
->>>>>>> parent of 52e3c06... add post, get Reply
-=======
->>>>>>> f259f98e996e359905f27cf6f939ec1082d99a69
 
 module.exports.newsAllCount = async function (event, context, callback) {
   try {

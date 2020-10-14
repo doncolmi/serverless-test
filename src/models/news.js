@@ -2,6 +2,10 @@
 
 module.exports = function (sequelize, DataTypes) {
   const News = sequelize.define("news", {
+    thumbnail: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+    },
     title: {
       type: DataTypes.STRING(200),
       allowNull: false,
