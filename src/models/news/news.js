@@ -1,5 +1,8 @@
 "use strict";
 
+const db = require("../../config/db");
+const NewsEdit = require("../news/NewsEdit")(db.sequelize, db.Sequelize);
+
 module.exports = function (sequelize, DataTypes) {
   const News = sequelize.define("news", {
     thumbnail: {
@@ -64,5 +67,7 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING(32),
     },
   });
+  News.hasMany(NewsEdit, { foreignKey: "newsId" });
+
   return News;
 };

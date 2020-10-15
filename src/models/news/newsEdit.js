@@ -1,10 +1,6 @@
 // uuid, newsId, item, type
 
 "use strict";
-const db = require("../config/db");
-
-const user = require("./user")(db.sequelize, db.Sequelize);
-const news = require("./news")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
   const NewsEdit = sequelize.define("newsEdit", {
@@ -21,7 +17,5 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: DataTypes.NOW,
     },
   });
-  user.hasMany(NewsEdit, { foreignKey: "uuid" });
-  news.hasMany(NewsEdit, { foreignKey: "newsId" });
   return NewsEdit;
 };

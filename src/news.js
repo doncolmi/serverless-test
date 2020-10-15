@@ -2,11 +2,13 @@
 const db = require("./config/db");
 
 //import Schema
-const newsScore = require("./models/newsScore");
-const news = require("./models/news")(db.sequelize, db.Sequelize);
-const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
-const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
-const newsContents = require("./models/newsContents")(
+const news = require("./models/news/news")(db.sequelize, db.Sequelize);
+const newsEdit = require("./models/news/newsEdit")(db.sequelize, db.Sequelize);
+const newsScore = require("./models/news/newsScore")(
+  db.sequelize,
+  db.Sequelize
+);
+const newsContents = require("./models/news/newsContents")(
   db.sequelize,
   db.Sequelize
 );

@@ -1,24 +1,31 @@
 const db = require("./config/db");
-const user = require("./models/user")(db.sequelize, db.Sequelize);
-const userSetting = require("./models/userSet")(db.sequelize, db.Sequelize);
-const news = require("./models/news")(db.sequelize, db.Sequelize);
-const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
-const newsReplyScore = require("./models/newsReplyScore")(
+const user = require("./models/user/user")(db.sequelize, db.Sequelize);
+const userSetting = require("./models/user/userSet")(
   db.sequelize,
   db.Sequelize
 );
-const newsReport = require("./models/newsReport")(db.sequelize, db.Sequelize);
-const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
-const newsContents = require("./models/newsContents")(
+const news = require("./models/news/news")(db.sequelize, db.Sequelize);
+const newsReply = require("./models/news/newsReply")(
   db.sequelize,
   db.Sequelize
 );
-const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
-
-const {
-  succesCallback,
-  failCallback,
-} = require("./middleware/callbackMiddleware");
+const newsReplyScore = require("./models/news/newsReplyScore")(
+  db.sequelize,
+  db.Sequelize
+);
+const newsReport = require("./models/news/newsReport")(
+  db.sequelize,
+  db.Sequelize
+);
+const newsEdit = require("./models/news/newsEdit")(db.sequelize, db.Sequelize);
+const newsContents = require("./models/news/newsContents")(
+  db.sequelize,
+  db.Sequelize
+);
+const newsScore = require("./models/news/newsScore")(
+  db.sequelize,
+  db.Sequelize
+);
 
 module.exports.syncDB = async function (event, context, callback) {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -33,10 +40,12 @@ module.exports.syncDB = async function (event, context, callback) {
     await newsEdit.sync();
     await newsContents.sync();
     await newsScore.sync();
-    await succesCallback(callback, 201, "Created!", true);
+    await callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "text/plain" },
+      body: "good",
+    });
   } catch (e) {
-    console.log(e);
-    const errorText = "syncError";
-    await failCallback(callback, e.statusCode, errorText, e);
+    callback(e);
   }
 };

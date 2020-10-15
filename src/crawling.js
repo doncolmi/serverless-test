@@ -7,8 +7,8 @@ const { Translate } = require("@google-cloud/translate").v2;
 
 const db = require("./config/db");
 const { aws, awsSecret } = require("./config/env.json")["development"];
-const news = require("./models/news")(db.sequelize, db.Sequelize);
-const newsContents = require("./models/newsContents")(
+const news = require("./models/news/news")(db.sequelize, db.Sequelize);
+const newsContents = require("./models/news/newsContents")(
   db.sequelize,
   db.Sequelize
 );

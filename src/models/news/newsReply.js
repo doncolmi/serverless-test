@@ -1,7 +1,7 @@
 "use strict";
-const db = require("../config/db");
+const db = require("../../config/db");
 
-const User = require("./user")(db.sequelize, db.Sequelize);
+const User = require("../user/user")(db.sequelize, db.Sequelize);
 const news = require("./news")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {

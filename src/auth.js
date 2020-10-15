@@ -1,6 +1,6 @@
 const db = require("./config/db");
-const user = require("./models/user")(db.sequelize, db.Sequelize);
-const userSet = require("./models/userSet")(db.sequelize, db.Sequelize);
+const user = require("./models/user/user")(db.sequelize, db.Sequelize);
+const userSet = require("./models/user/userSet")(db.sequelize, db.Sequelize);
 
 const axios = require("axios");
 const uuid = require("uuid4");
