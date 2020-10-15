@@ -18,71 +18,37 @@ provider:
     NODE_ENV: development
 
 custom:
-  contentCompression: 1024
+  contentCompression: 256
 
 functions:
-  certificateUser:
-    handler: src/user.certificateUser
-    events:
-      - http:
-          path: v1/user/auth
-          method: get
-          request:
-            parameters:
-              querystrings:
-                code: true
-  auth:
-    handler: src/auth.auth
-    events:
-      - http:
-          path: v1/auth
-          method: post
+  # auth.js
   login:
     handler: src/auth.login
     events:
       - http:
           path: v1/auth/login
           method: get
-  createUser:
-    handler: src/user.createUser
+  # crawling.js
+  crwaling:
+    handler: src/crawling.newsCrawling
     events:
       - http:
-          path: v1/user
-          method: post
+          path: /v1/crwaling
+          method: get
+  # sync.js
   syncDB:
     handler: src/sync.syncDB
     events:
       - http:
           path: v1/sync
           method: get
-  bbc:
-    handler: src/crawling.bbcFootBall
+  # news.js
+  countAllNews:
+    handler: src/news.countAllNews
     events:
       - http:
-          path: v1/bbc
+          path: v1/news/cnt
           method: get
-  sky:
-    handler: src/crawling.skyFootBall
-    events:
-      - http:
-          path: v1/sky
-          method: get
-  goal:
-    handler: src/crawling.goalFootBall
-    events:
-      - http:
-          path: v1/goal
-          method: get
-  getNews:
-    handler: src/news.get
-    events:
-      - http:
-          path: v1/news/{newsId}
-          method: get
-          request:
-            parameters:
-              paths:
-                newsId: true
   getRecentNews:
     handler: src/news.getRecentNews
     events:
@@ -99,54 +65,16 @@ functions:
             parameters:
               querystrings:
                 page: false
-  getNewsCnt:
-    handler: src/news.newsAllCount
+  getNews:
+    handler: src/news.getNews
     events:
       - http:
-          path: v1/news/cnt
-          method: get
-  getReply:
-    handler: src/news.getReply
-    events:
-      - http:
-          path: v1/news/{newsId}/reply
+          path: v1/news/{newsId}
           method: get
           request:
             parameters:
               paths:
                 newsId: true
-  getReplyCnt:
-    handler: src/news.getReplyCnt
-    events:
-      - http:
-          path: v1/news/{newsId}/reply/cnt
-          method: get
-          request:
-            parameters:
-              paths:
-                newsId: true
-  postReply:
-    handler: src/news.postReply
-    events:
-      - http:
-          path: v1/news/reply
-          method: post
-  getReplyScore:
-    handler: src/news.getReplyScoreCnt
-    events:
-      - http:
-          path: /v1/reply/{id}/score
-          method: get
-          request:
-            parameters:
-              paths:
-                id: true
-  replyScore:
-    handler: src/news.replyScore
-    events:
-      - http:
-          path: /v1/news/reply/score
-          method: post
   getNewsUserLink:
     handler: src/news.getNewsUserLink
     events:
@@ -157,9 +85,46 @@ functions:
             parameters:
               paths:
                 newsId: true
-  test:
-    handler: src/s3.s3upload
+  # newsReply.js
+  getReplyCnt:
+    handler: src/newsReply.getReplyCnt
     events:
       - http:
-          path: /v1/test
+          path: v1/news/{newsId}/reply/cnt
           method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
+  getReply:
+    handler: src/newsReply.getReply
+    events:
+      - http:
+          path: v1/news/{newsId}/reply
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
+  postReply:
+    handler: src/newsReply.postReply
+    events:
+      - http:
+          path: v1/news/reply
+          method: post
+  getReplyScore:
+    handler: src/newsReply.getReplyScore
+    events:
+      - http:
+          path: /v1/reply/{id}/score
+          method: get
+          request:
+            parameters:
+              paths:
+                id: true
+  replyScore:
+    handler: src/newsReply.replyScore
+    events:
+      - http:
+          path: /v1/news/reply/score
+          method: post

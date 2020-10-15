@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ajv": "^6.12.5",
+    "@google-cloud/translate": "^6.0.3",
     "aws-sdk": "^2.771.0",
     "axios": "^0.20.0",
     "cheerio": "^1.0.0-rc.3",
@@ -18,7 +18,8 @@
     "mariadb": "^2.4.2",
     "sequelize": "^6.3.5",
     "serverless-api-compression": "^1.0.1",
-    "uuid4": "^2.0.2"
+    "uuid4": "^2.0.2",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "eslint": "^7.11.0",

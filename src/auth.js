@@ -1,21 +1,16 @@
 const db = require("./config/db");
-const { kakao, kakao_secret, kakao_js } = require("./config/env.json")[
-  "development"
-];
 const user = require("./models/user")(db.sequelize, db.Sequelize);
 const userSet = require("./models/userSet")(db.sequelize, db.Sequelize);
 
 const axios = require("axios");
 const uuid = require("uuid4");
 
-const {
-  succesCallback,
-  failCallback,
-} = require("./middleware/callbackMiddleware");
-
+/** @description login and join
+ * @requires Authorization in header
+ * @return {JSON}
+ */
 module.exports.login = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
-  const makeRandomName = () => uuid().split("-")[0];
 
   const token = event.headers.Authorization;
   const tokenHeader = { Authorization: token };
@@ -27,7 +22,7 @@ module.exports.login = async (event, context, callback) => {
   if (data.id) {
     const getUser = await user.findOrCreate({
       where: { uuid: data.id },
-      defaults: { name: makeRandomName(), createdUuid: data.id },
+      defaults: { name: uuid().split("-")[0], createdUuid: data.id },
     });
     const userInfo = getUser[0].dataValues;
     const isJoin = getUser[1];
@@ -36,17 +31,12 @@ module.exports.login = async (event, context, callback) => {
       defaults: { createdUuid: data.id },
     });
     const userSetInfo = getUserSet[0].dataValues;
-    await succesCallback(
-      callback,
-      isJoin ? 201 : 200,
-      JSON.stringify({ ...userInfo, ...userSetInfo }),
-      false
-    );
-  } else {
-    callback(null, {
-      statusCode: 500,
-      headers: { "Content-Type": "text/plain" },
-      body: "Error",
+    await callback(null, {
+      statusCode: isJoin ? 201 : 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...userInfo, ...userSetInfo }),
     });
+  } else {
+    callback(e);
   }
 };

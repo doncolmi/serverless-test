@@ -1,12 +1,9 @@
-const { sequelize } = require("./config/db");
+// import database setting
 const db = require("./config/db");
+
+//import Schema
 const newsScore = require("./models/newsScore");
 const news = require("./models/news")(db.sequelize, db.Sequelize);
-const newsReply = require("./models/newsReply")(db.sequelize, db.Sequelize);
-const newsReplyScore = require("./models/newsReplyScore")(
-  db.sequelize,
-  db.Sequelize
-);
 const newsEdit = require("./models/newsEdit")(db.sequelize, db.Sequelize);
 const newsScore = require("./models/newsScore")(db.sequelize, db.Sequelize);
 const newsContents = require("./models/newsContents")(
@@ -14,7 +11,12 @@ const newsContents = require("./models/newsContents")(
   db.Sequelize
 );
 
-module.exports.newsAllCount = async function (event, context, callback) {
+/** @description count rows in news Table for paging
+ * @return {JSON}
+ */
+module.exports.countAllNews = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const cntNews = await news.count({});
     callback(null, {
@@ -27,7 +29,12 @@ module.exports.newsAllCount = async function (event, context, callback) {
   }
 };
 
+/** @description get 5 most recent News for main Page
+ * @return {JSON}
+ */
 module.exports.getRecentNews = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const getNews = await news.findAll({
       limit: 5,
@@ -62,7 +69,13 @@ module.exports.getRecentNews = async function (event, context, callback) {
   }
 };
 
+/** @description get NewsList
+ * @param {number} page List Page
+ * @return {JSON}
+ */
 module.exports.getNewsList = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     let page = 0;
     if (event.queryStringParameters.page) {
@@ -72,7 +85,7 @@ module.exports.getNewsList = async function (event, context, callback) {
     const maxPage = parseInt(cnt / 10);
     if (page > maxPage) page = maxPage;
 
-    const getNews = await news.findAll({
+    const getNewsList = await news.findAll({
       offset: page * 10,
       limit: 10,
       order: [["date", "DESC"]],
@@ -89,11 +102,11 @@ module.exports.getNewsList = async function (event, context, callback) {
       ],
     });
 
-    if (getNews.length > 0) {
+    if (getNewsList.length > 0) {
       callback(null, {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(getNews),
+        body: JSON.stringify(getNewsList),
       });
     } else {
       callback(null, {
@@ -107,7 +120,13 @@ module.exports.getNewsList = async function (event, context, callback) {
   }
 };
 
-module.exports.get = async function (event, context, callback) {
+/** @description get News
+ * @param {number} newsId NewsId the user wants
+ * @return {JSON}
+ */
+module.exports.getNews = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const newsId = event.pathParameters.newsId;
     const getNews = await news.findOne({ where: { id: newsId } });
@@ -130,173 +149,13 @@ module.exports.get = async function (event, context, callback) {
   }
 };
 
-module.exports.getReply = async function (event, context, callback) {
-  try {
-    const newsId = event.pathParameters.newsId;
-    const getNews = await newsReply.findAll({
-      where: { newsId: newsId },
-      order: [["createdDate", "DESC"]],
-    });
-    callback(null, {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(getNews),
-    });
-  } catch (e) {
-    callback(e);
-  }
-};
-
-module.exports.getReplyCnt = async function (event, context, callback) {
-  try {
-    const newsId = event.pathParameters.newsId;
-    const cntNews = await newsReply.count({ where: { newsId: newsId } });
-    await callback(null, {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(cntNews),
-    });
-  } catch (e) {
-    callback(e);
-  }
-};
-
-module.exports.postReply = async function (event, context, callback) {
-  try {
-    if (!event.headers.Authorization) {
-      callback(null, {
-        statusCode: 403,
-        headers: { "Content-Type": "text/plain" },
-        body: "403 - Forbidden",
-      });
-      return;
-    }
-
-    const body = JSON.parse(event.body);
-    const save = await newsReply.create(body);
-    const update = await news.update(
-      { reply: db.sequelize.literal("reply + 1") },
-      { where: { id: body.newsId } }
-    );
-
-    callback(null, {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(save),
-    });
-  } catch (e) {
-    callback(e);
-  }
-};
-
-module.exports.replyScore = async function (event, context, callback) {
-  try {
-    if (!event.headers.Authorization) {
-      callback(null, {
-        statusCode: 403,
-        headers: { "Content-Type": "text/plain" },
-        body: "403 - Forbidden",
-      });
-      return;
-    }
-
-    // body
-    // uuid: string, replyId: string, type: booelan, newsId: string
-
-    const body = JSON.parse(event.body);
-    // 먼저 uuid를 통해 해당 댓글에 대해 점수를 부여한적이 있는지 체크 합니다.
-    const isScored = await newsReplyScore.count({
-      where: { createdUuid: body.createdUuid, newsReplyId: body.newsReplyId },
-    });
-    if (isScored > 0) {
-      callback(null, {
-        statusCode: 304,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Duplicate request" }),
-      });
-      return;
-    }
-    const save = await newsReplyScore.create(body);
-
-    // 만약 news 스코어가 딱 29이면서 타입이 +라면 업데이트 문을 수정합니다.
-    const { dataValues } = await newsReply.findOne({
-      where: { id: body.newsReplyId },
-      attributes: ["score", "type", "newsId", "item", "userUuid"],
-    });
-
-    const { score, type, item, userUuid, newsId } = dataValues;
-
-    if (score === 29 && body.type) {
-      if (type === "title") {
-        const newsData = await news.findOne({
-          where: { id: body.newsId },
-          attributes: ["tag", "translatedTitle"],
-        });
-        const { tag, translatedTitle } = newsData.dataValues;
-        await news.update(
-          {
-            translatedTitle: item,
-            modifiedUuid: userUuid,
-            modifiedDate: new Date(),
-            prevTitle: translatedTitle,
-            tag: tag.replace("AI번역", "유저번역"),
-          },
-          { where: { id: newsId } }
-        );
-      }
-      if (type !== "default") {
-        await newsEdit.create({
-          uuid: userUuid,
-          newsId: newsId,
-          item: item,
-          type: type,
-        });
-      }
-      await newsReply.update(
-        { isSelection: true },
-        { where: { id: body.newsReplyId } }
-      );
-    } else if (score === 30 && !body.type) {
-      await newsReply.update(
-        { isSelection: false },
-        { where: { id: body.newsReplyId } }
-      );
-    }
-
-    // news 스코어 조정
-    await newsReply.update(
-      { score: db.sequelize.literal(`score ${body.type ? "+" : "-"} 1`) },
-      { where: { id: body.newsReplyId } }
-    );
-
-    await callback(null, {
-      statusCode: 201,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(save),
-    });
-  } catch (e) {
-    callback(e);
-  }
-};
-
-module.exports.getReplyScoreCnt = async function (event, context, callback) {
-  try {
-    const id = event.pathParameters.id;
-    const score = await newsReply.findOne({
-      where: { id: id },
-      attributes: ["score"],
-    });
-    await callback(null, {
-      statusCode: 201,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(score),
-    });
-  } catch (e) {
-    callback(e);
-  }
-};
-
+/** @description To bring the link registered by the user
+ * @param {number} newsId Primary Key from news Table
+ * @return {JSON}
+ */
 module.exports.getNewsUserLink = async function (event, context, callback) {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   try {
     const id = event.pathParameters.newsId;
     const items = await newsEdit.findAll({
@@ -314,13 +173,17 @@ module.exports.getNewsUserLink = async function (event, context, callback) {
 };
 
 // todo: getNewsScore 만들어야합니다!
+// todo: 아직 아래 yml에 등록안함!!
 
+/** @description post newsScore
+ * @param {string} uuid Primary Key from user Table
+ * @param {number} newsId Primary Key from news Table
+ * @return {JSON}
+ */
 module.exports.postNewsScore = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  // body
-  // newsId, href, uuid => JSON.stringfy
-  const { newsId, href, uuid } = JSON.parse(event.body);
+  const { newsId, uuid } = JSON.parse(event.body);
 
   // duplicate check
   const isDuplicate =
