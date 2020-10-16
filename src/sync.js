@@ -1,4 +1,4 @@
-const db = require("./config/db");
+const db = require("./config/config");
 const user = require("./models/user/user")(db.sequelize, db.Sequelize);
 const userSetting = require("./models/user/userSet")(
   db.sequelize,

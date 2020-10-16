@@ -3,7 +3,6 @@
 const Sequelize = require("sequelize");
 const mode = process.env.NODE_ENV || "development";
 const env = require("./env.json")[mode];
-let db = {};
 
 const sequelize = new Sequelize(env.database, env.username, env.password, {
   host: env.host,

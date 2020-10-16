@@ -1,5 +1,5 @@
 "use strict";
-const db = require("../../config/db");
+const db = require("../../config/config");
 
 const news = require("./news")(db.sequelize, db.Sequelize);
 

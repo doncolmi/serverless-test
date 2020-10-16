@@ -1,6 +1,6 @@
-// uuid, newsId, item, type
-
 "use strict";
+
+const d
 
 module.exports = function (sequelize, DataTypes) {
   const NewsEdit = sequelize.define("newsEdit", {

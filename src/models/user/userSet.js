@@ -1,7 +1,7 @@
 "use strict";
 
-const db = require("../../config/db");
-const user = require("./user")(db.sequelize, db.Sequelize);
+const db = require("../../config/config");
+const User = require("./user")(db.sequelize, db.Sequelize);
 
 module.exports = function (sequelize, DataTypes) {
   const UserSetting = sequelize.define("UserSetting", {
@@ -30,6 +30,9 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING(32),
     },
   });
-  UserSetting.belongsTo(user, { foreignKey: "uuid" });
+  UserSetting.belongsTo(User, {
+    foreignKey: { name: "uuid" },
+    onDelete: "CASCADE",
+  });
   return UserSetting;
 };

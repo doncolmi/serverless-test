@@ -48,7 +48,7 @@ module.exports.newsCrawling = async (event, context, callback) => {
         : [translations];
       return translations;
     } catch (e) {
-      // console.log(e);
+      console.log(e);
       return ["", ""];
     }
   }

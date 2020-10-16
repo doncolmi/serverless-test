@@ -1,7 +1,4 @@
 "use strict";
-const db = require("../../config/db");
-const NewsEdit = require("../news/NewsEdit")(db.sequelize, db.Sequelize);
-
 module.exports = function (sequelize, DataTypes) {
   const User = sequelize.define("user", {
     uuid: {
@@ -30,6 +27,5 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING(20),
     },
   });
-  User.hasMany(NewsEdit);
   return User;
 };
