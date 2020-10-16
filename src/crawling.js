@@ -72,28 +72,29 @@ module.exports.newsCrawling = async (event, context, callback) => {
         let description;
         if (press.name === "가디언") {
           const $ = cheerio.load(item.description[0]);
-          description = $("p").slice(0, 1).text();
+          description = $("p").slice(0, 2).text();
         } else {
           description = item.description[0];
         }
 
         const translationText = await doTanslate([title, description]);
 
+        let transDescription = translationText[1];
+        if (press.name === "가디언" && translationText[1].length > 300) {
+          transDescription = `${translationText[1].slice(0, 300)}...`;
+        }
+
         const newsData = {
           title: title,
           translatedTitle: translationText[0],
-          description:
-            press.name === "가디언" && translationText[1].length > 300
-              ? translationText[1]
-              : `${translationText[1].slice(0, 300)}...`,
+          description: transDescription,
           date: new Date(item.pubDate[0]),
           topic: "해외 축구",
           tag: `${press.name}|AI번역`,
           href: href,
         };
 
-        if (press.name === "Goal") {
-          // image crawling
+        if (press.name === "Goal" && "media:content" in item) {
           const { data } = await axios({
             url: item["media:content"][0]["$"].url
               .split("?")[0]
@@ -140,6 +141,83 @@ module.exports.newsCrawling = async (event, context, callback) => {
       statusCode: 201,
       headers: { "Content-Type": "text/plain" },
       body: `${udtCnt}개의 뉴스 업데이트, ${errCnt}개의 에러`,
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+/** @description post goal.com crawling Contents
+ * @param {string} url site url
+ * @return {JSON}
+ */
+module.exports.goalContents = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  const translate = new Translate();
+
+  async function doTanslate(text) {
+    try {
+      let [translations] = await translate.translate(text, "ko");
+      translations = Array.isArray(translations)
+        ? translations
+        : [translations];
+      return translations;
+    } catch (e) {
+      console.log(e);
+      return [""];
+    }
+  }
+
+  try {
+    const newsId = event.pathParameters.newsId;
+    const { url, tag } = JSON.parse(event.body);
+
+    let contents;
+
+    if (!url.includes("https://www.goal.com/en/news/")) {
+      contents =
+        "해당 기사는 영상 클립이거나 잘못된 링크를 가지고 있어 본문을 가져오지 못했습니다.";
+    } else {
+      const { data } = await axios.get(url).catch((e) => {
+        errorCallback(e);
+      });
+
+      const $ = cheerio.load(data);
+      const container = $(".page-container");
+      const teaser = container.find(".teaser").text();
+      const contentsArray = container.find("p").slice(0, 5).toArray();
+
+      const transTeaser = await doTanslate(teaser);
+      contents = `<div class="header"><p>${transTeaser}</p><p class="engSub">${teaser}</p></div>`;
+
+      for (const content of contentsArray) {
+        const text = $(content).text();
+        const trans = await doTanslate(text);
+        const forConcat = `<div class="pContent"><p>${trans}</p><p class="engSub">${text}</p></div>`;
+        contents = contents.concat(forConcat);
+      }
+
+      const tagCon = `${tag}|본문등재`;
+
+      await news.update(
+        {
+          tag: tagCon,
+          modifiedDate: new Date(),
+        },
+        { where: { id: newsId } }
+      );
+    }
+
+    const updated = await newsContents.update(
+      { contents: contents, modifiedDate: new Date() },
+      { where: { id: newsId } }
+    );
+
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "text/plain" },
+      body: "well",
     });
   } catch (e) {
     callback(e);

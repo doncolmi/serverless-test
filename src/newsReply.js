@@ -199,6 +199,7 @@ module.exports.replyScore = async function (event, context, callback) {
         { where: { id: body.newsReplyId } }
       );
     }
+    // 이 부분 왜 요류뜨냐?? todo
 
     // And it updates the score of the newsReply.
     await newsReply.update(

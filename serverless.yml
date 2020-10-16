@@ -35,6 +35,16 @@ functions:
       - http:
           path: /v1/crwaling
           method: get
+  goalContents:
+    handler: src/crawling.goalContents
+    events:
+      - http:
+          path: /v1/news/{newsId}/goal
+          method: post
+          request:
+            parameters:
+              paths:
+                newsId: true
   # sync.js
   syncDB:
     handler: src/sync.syncDB
