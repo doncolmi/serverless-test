@@ -1,17 +1,12 @@
-// import database setting
-const db = require("./config/db");
-
 //import Schema
-const news = require("./models/news/news")(db.sequelize, db.Sequelize);
-const newsEdit = require("./models/news/newsEdit")(db.sequelize, db.Sequelize);
-const newsScore = require("./models/news/newsScore")(
-  db.sequelize,
-  db.Sequelize
-);
+const { sequelize, Sequelize } = require("./models");
+const news = require("./models/news/news")(sequelize, Sequelize);
 const newsContents = require("./models/news/newsContents")(
-  db.sequelize,
-  db.Sequelize
+  sequelize,
+  Sequelize
 );
+const newsScore = require("./models/news/newsScore")(sequelize, Sequelize);
+const newsEdit = require("./models/news/newsEdit")(sequelize, Sequelize);
 
 /** @description count rows in news Table for paging
  * @return {JSON}
@@ -174,6 +169,30 @@ module.exports.getNewsUserLink = async function (event, context, callback) {
   }
 };
 
+/** @description get NewsContents
+ * @param {number} newsId Primary Key from news Table
+ * @return {JSON}
+ */
+module.exports.getNewsContents = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  const newsId = event.pathParameters.newsId;
+  const { dataValues } = await newsContents.findOne({ where: { id: newsId } });
+  if (dataValues) {
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dataValues),
+    });
+  } else {
+    callback(null, {
+      statusCode: 404,
+      headers: { "Content-Type": "text/plain" },
+      body: "Not Found",
+    });
+  }
+};
+
 // todo: getNewsScore 만들어야합니다!
 // todo: 아직 아래 yml에 등록안함!!
 
@@ -185,53 +204,53 @@ module.exports.getNewsUserLink = async function (event, context, callback) {
 module.exports.postNewsScore = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  const { newsId, uuid } = JSON.parse(event.body);
+  const ec = async (code, body) =>
+    await callback(null, {
+      statusCode: code,
+      headers: { "Content-Type": "text/plain" },
+      body: body,
+    });
+
+  const newsId = event.pathParameters.newsId;
+  const { uuid } = JSON.parse(event.body);
+
+  if (!event.headers.Authorization) {
+    await ec(403, "Forbidden");
+    return;
+  }
 
   // duplicate check
   const isDuplicate =
-    (await newsScore.count({ where: { newsId: newsId, uuid: uuid } })) < 1;
+    (await newsScore.count({ where: { newsId: newsId, userUuid: uuid } })) > 0;
   if (isDuplicate) {
-    callback(null, {
-      statusCode: 409,
-      headers: { "Content-Type": "text/plain" },
-      body: `Duplicate Vote`,
-    });
+    await ec(409, "Duplicate Vote");
   } else {
     // newsScore check
     try {
       const NewsContent = await newsContents.findOne({
-        where: { newsId: newsId },
+        where: { id: newsId },
       });
       const { score, contents } = NewsContent.dataValues;
 
       if (contents) {
-        callback(null, {
-          statusCode: 409,
-          headers: { "Content-Type": "text/plain" },
-          body: `Already finished`,
-        });
+        await ec(406, "Already finished");
       } else {
+        await newsScore.create({ newsId: newsId, userUuid: uuid });
         await newsContents.update(
           {
-            score: db.sequelize.literal(`score + 1`),
+            score: sequelize.literal(`score + 1`),
             modifiedUuid: uuid,
             modifiedDate: new Date(),
           },
-          { where: { newsId: newsId } }
+          { where: { id: newsId } }
         );
-        await newsScore.create({ newsId: newsId, uuid: uuid });
         if (score < 29) {
-          callback(null, {
-            statusCode: 201,
-            headers: { "Content-Type": "text/plain" },
-            body: `투표 성공!`,
-          });
+          await ec(201, "투표 성공!");
         } else {
-          callback(null, {
-            statusCode: 202,
-            headers: { "Content-Type": "text/plain" },
-            body: `투표가 완료되었습니다! 빠른 시간 내에 본문을 번역하여 가져오겠습니다!`,
-          });
+          await ec(
+            202,
+            `투표가 완료되었습니다! 빠른 시간 내에 본문을 번역하여 가져오겠습니다!`
+          );
         }
       }
     } catch (e) {

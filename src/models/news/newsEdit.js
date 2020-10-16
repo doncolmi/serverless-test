@@ -1,7 +1,5 @@
 "use strict";
 
-const d
-
 module.exports = function (sequelize, DataTypes) {
   const NewsEdit = sequelize.define("newsEdit", {
     type: {
@@ -15,6 +13,12 @@ module.exports = function (sequelize, DataTypes) {
     createdDate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    userUuid: {
+      type: DataTypes.STRING(20),
+    },
+    newsId: {
+      type: DataTypes.INTEGER(11),
     },
   });
   return NewsEdit;

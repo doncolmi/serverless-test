@@ -5,12 +5,12 @@ const xml = require("xml2js");
 const cheerio = require("cheerio");
 const { Translate } = require("@google-cloud/translate").v2;
 
-const db = require("./config/db");
+const { sequelize, Sequelize } = require("./models");
 const { aws, awsSecret } = require("./config/env.json")["development"];
-const news = require("./models/news/news")(db.sequelize, db.Sequelize);
+const news = require("./models/news/news")(sequelize, Sequelize);
 const newsContents = require("./models/news/newsContents")(
-  db.sequelize,
-  db.Sequelize
+  sequelize,
+  Sequelize
 );
 
 const AWS = require("aws-sdk");
@@ -72,7 +72,7 @@ module.exports.newsCrawling = async (event, context, callback) => {
         let description;
         if (press.name === "가디언") {
           const $ = cheerio.load(item.description[0]);
-          description = $("p").slice(0, 1).text().split(".")[0];
+          description = $("p").slice(0, 1).text();
         } else {
           description = item.description[0];
         }
@@ -82,7 +82,10 @@ module.exports.newsCrawling = async (event, context, callback) => {
         const newsData = {
           title: title,
           translatedTitle: translationText[0],
-          description: translationText[1],
+          description:
+            press.name === "가디언" && translationText[1].length > 300
+              ? translationText[1]
+              : `${translationText[1].slice(0, 300)}...`,
           date: new Date(item.pubDate[0]),
           topic: "해외 축구",
           tag: `${press.name}|AI번역`,
@@ -115,9 +118,9 @@ module.exports.newsCrawling = async (event, context, callback) => {
           await s3.upload(s3Params).promise();
 
           newsData.thumbnail = key;
+          newsData.tag = `${press.name}|AI번역|사진`;
         } else if (press.name === "가디언") {
           newsData.topic = item["category"][0]["_"];
-          newsData.tag = `${press.name}|AI번역|설명등재`;
         }
 
         news

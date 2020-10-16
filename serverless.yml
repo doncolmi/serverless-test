@@ -85,6 +85,26 @@ functions:
             parameters:
               paths:
                 newsId: true
+  getNewsContents:
+    handler: src/news.getNewsContents
+    events:
+      - http:
+          path: /v1/news/{newsId}/score
+          method: get
+          request:
+            parameters:
+              paths:
+                newsId: true
+  postNewsScore:
+    handler: src/news.postNewsScore
+    events:
+      - http:
+          path: /v1/news/{newsId}/score
+          method: post
+          request:
+            parameters:
+              paths:
+                newsId: true
   # newsReply.js
   getReplyCnt:
     handler: src/newsReply.getReplyCnt

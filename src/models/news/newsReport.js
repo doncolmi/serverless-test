@@ -1,9 +1,4 @@
 "use strict";
-const db = require("../../config/config");
-
-const user = require("../user/user")(db.sequelize, db.Sequelize);
-const newsReply = require("./newsReply")(db.sequelize, db.Sequelize);
-
 module.exports = function (sequelize, DataTypes) {
   const NewsReport = sequelize.define("newsReport", {
     type: {
@@ -15,8 +10,12 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    userUuid: {
+      type: DataTypes.STRING(20),
+    },
+    newsReplyId: {
+      type: DataTypes.INTEGER(11),
+    },
   });
-  user.hasMany(NewsReport);
-  newsReply.hasMany(NewsReport);
   return NewsReport;
 };

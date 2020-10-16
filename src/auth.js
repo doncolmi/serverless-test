@@ -1,6 +1,6 @@
-const db = require("./config/db");
-const user = require("./models/user/user")(db.sequelize, db.Sequelize);
-const userSet = require("./models/user/userSet")(db.sequelize, db.Sequelize);
+const { sequelize, Sequelize } = require("./models");
+const user = require("./models/user/user")(sequelize, Sequelize);
+const userSet = require("./models/user/userSet")(sequelize, Sequelize);
 
 const axios = require("axios");
 const uuid = require("uuid4");
@@ -28,7 +28,7 @@ module.exports.login = async (event, context, callback) => {
     const isJoin = getUser[1];
     const getUserSet = await userSet.findOrCreate({
       where: { uuid: data.id },
-      defaults: { createdUuid: data.id },
+      defaults: { uuid: data.id },
     });
     const userSetInfo = getUserSet[0].dataValues;
     await callback(null, {

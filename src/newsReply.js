@@ -1,17 +1,12 @@
-// import database setting
-const db = require("./config/db");
-
 //import Schema
-const news = require("./models/news/news")(db.sequelize, db.Sequelize);
-const newsReply = require("./models/news/newsReply")(
-  db.sequelize,
-  db.Sequelize
-);
+const { sequelize, Sequelize } = require("./models");
+const news = require("./models/news/news")(sequelize, Sequelize);
+const newsReply = require("./models/news/newsReply")(sequelize, Sequelize);
 const newsReplyScore = require("./models/news/newsReplyScore")(
-  db.sequelize,
-  db.Sequelize
+  sequelize,
+  Sequelize
 );
-const newsEdit = require("./models/news/newsEdit")(db.sequelize, db.Sequelize);
+const newsEdit = require("./models/news/newsEdit")(sequelize, Sequelize);
 
 /** @description get Reply Count for Users who don't want to see Reply
  * @param {number} newsId Primary Key from news Table
@@ -80,7 +75,7 @@ module.exports.postReply = async function (event, context, callback) {
     const body = JSON.parse(event.body);
     const save = await newsReply.create(body);
     const update = await news.update(
-      { reply: db.sequelize.literal("reply + 1") },
+      { reply: sequelize.literal("reply + 1") },
       { where: { id: body.newsId } }
     );
 
@@ -144,7 +139,7 @@ module.exports.replyScore = async function (event, context, callback) {
 
     // First, check if you have given a score for the comment through uuid.
     const isScored = await newsReplyScore.count({
-      where: { createdUuid: body.createdUuid, newsReplyId: body.newsReplyId },
+      where: { userUuid: body.createdUuid, newsReplyId: body.newsReplyId },
     });
 
     // If the count is 1 or more, it is a duplicate vote, so 304 code is returned.
@@ -207,7 +202,7 @@ module.exports.replyScore = async function (event, context, callback) {
 
     // And it updates the score of the newsReply.
     await newsReply.update(
-      { score: db.sequelize.literal(`score ${body.type ? "+" : "-"} 1`) },
+      { score: sequelize.literal(`score ${body.type ? "+" : "-"} 1`) },
       { where: { id: body.newsReplyId } }
     );
 
