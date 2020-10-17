@@ -136,10 +136,11 @@ module.exports.replyScore = async function (event, context, callback) {
 
     // parse data in body
     const body = JSON.parse(event.body);
+    console.log(body);
 
     // First, check if you have given a score for the comment through uuid.
     const isScored = await newsReplyScore.count({
-      where: { userUuid: body.createdUuid, newsReplyId: body.newsReplyId },
+      where: { userUuid: body.userUuid, newsReplyId: body.newsReplyId },
     });
 
     // If the count is 1 or more, it is a duplicate vote, so 304 code is returned.
@@ -163,10 +164,12 @@ module.exports.replyScore = async function (event, context, callback) {
 
     const { score, type, item, userUuid, newsId } = dataValues;
 
+    console.log(userUuid);
+
     if (score === 29 && body.type) {
       if (type === "title") {
         const newsData = await news.findOne({
-          where: { id: body.newsId },
+          where: { id: newsId },
           attributes: ["tag", "translatedTitle"],
         });
         const { tag, translatedTitle } = newsData.dataValues;
@@ -183,7 +186,7 @@ module.exports.replyScore = async function (event, context, callback) {
       }
       if (type !== "default") {
         await newsEdit.create({
-          uuid: userUuid,
+          userUuid: userUuid,
           newsId: newsId,
           item: item,
           type: type,

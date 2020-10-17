@@ -154,6 +154,15 @@ module.exports.newsCrawling = async (event, context, callback) => {
 module.exports.goalContents = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
+  if (!event.headers.Authorization) {
+    callback(null, {
+      statusCode: 403,
+      headers: { "Content-Type": "text/plain" },
+      body: "403 - Forbidden",
+    });
+    return;
+  }
+
   const translate = new Translate();
 
   async function doTanslate(text) {
@@ -207,6 +216,276 @@ module.exports.goalContents = async (event, context, callback) => {
         },
         { where: { id: newsId } }
       );
+    }
+
+    const updated = await newsContents.update(
+      { contents: contents, modifiedDate: new Date() },
+      { where: { id: newsId } }
+    );
+
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "text/plain" },
+      body: "well",
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+/** @description post theguardian.com crawling Contents
+ * @param {string} url site url
+ * @return {JSON}
+ */
+module.exports.guardianContents = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  if (!event.headers.Authorization) {
+    callback(null, {
+      statusCode: 403,
+      headers: { "Content-Type": "text/plain" },
+      body: "403 - Forbidden",
+    });
+    return;
+  }
+
+  const translate = new Translate();
+
+  async function doTanslate(text) {
+    try {
+      let [translations] = await translate.translate(text, "ko");
+      translations = Array.isArray(translations)
+        ? translations
+        : [translations];
+      return translations;
+    } catch (e) {
+      console.log(e);
+      return [""];
+    }
+  }
+
+  try {
+    const newsId = event.pathParameters.newsId;
+    const { url, tag } = JSON.parse(event.body);
+
+    let contents;
+
+    if (!url.includes("https://www.theguardian.com/football/")) {
+      contents =
+        "해당 기사는 영상 클립이거나 잘못된 링크를 가지고 있어 본문을 가져오지 못했습니다.";
+    } else {
+      const { data } = await axios.get(url).catch((e) => {
+        errorCallback(e);
+      });
+
+      const $ = cheerio.load(data);
+      let container = $(".article-body-commercial-selector");
+
+      if (container.html()) {
+        const contentsArray = container
+          .find("p.css-38z03z")
+          .slice(0, 5)
+          .toArray();
+        const header = $(contentsArray[0]).text();
+        const transHeader = await doTanslate(header);
+        contents = `<div class="header"><p>${transHeader}</p><p class="engSub">${header}</p></div>`;
+        const bodys = contentsArray.slice(1);
+        for (const content of bodys) {
+          const text = $(content).text();
+          const trans = await doTanslate(text);
+          const forConcat = `<div class="pContent"><p>${trans}</p><p class="engSub">${text}</p></div>`;
+          contents = contents.concat(forConcat);
+        }
+
+        const tagCon = `${tag}|본문등재`;
+
+        await news.update(
+          {
+            tag: tagCon,
+            modifiedDate: new Date(),
+          },
+          { where: { id: newsId } }
+        );
+      } else {
+        container = $(".content__article-body");
+        if (container.html()) {
+          const contentsArray = container.find("p").slice(0, 5).toArray();
+
+          const header = $(contentsArray[0]).text();
+          const transHeader = await doTanslate(header);
+          contents = `<div class="header"><p>${transHeader}</p><p class="engSub">${header}</p></div>`;
+          const bodys = contentsArray.slice(1);
+          for (const content of bodys) {
+            const text = $(content).text();
+            const trans = await doTanslate(text);
+            const forConcat = `<div class="pContent"><p>${trans}</p><p class="engSub">${text}</p></div>`;
+            contents = contents.concat(forConcat);
+          }
+
+          const tagCon = `${tag}|본문등재`;
+
+          await news.update(
+            {
+              tag: tagCon,
+              modifiedDate: new Date(),
+            },
+            { where: { id: newsId } }
+          );
+        } else {
+          contents =
+            "해당 기사는 영상 클립이거나 잘못된 링크를 가지고 있어 본문을 가져오지 못했습니다.";
+        }
+      }
+    }
+
+    const updated = await newsContents.update(
+      { contents: contents, modifiedDate: new Date() },
+      { where: { id: newsId } }
+    );
+
+    callback(null, {
+      statusCode: 200,
+      headers: { "Content-Type": "text/plain" },
+      body: "well",
+    });
+  } catch (e) {
+    callback(e);
+  }
+};
+
+/** @description post bbc.com crawling Contents
+ * @param {string} url site url
+ * @return {JSON}
+ */
+module.exports.bbcContents = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  const s3 = new AWS.S3({
+    accessKeyId: aws,
+    secretAccessKey: awsSecret,
+    region: "ap-northeast-2",
+  });
+
+  if (!event.headers.Authorization) {
+    callback(null, {
+      statusCode: 403,
+      headers: { "Content-Type": "text/plain" },
+      body: "403 - Forbidden",
+    });
+    return;
+  }
+
+  const translate = new Translate();
+
+  async function doTanslate(text) {
+    try {
+      let [translations] = await translate.translate(text, "ko");
+      translations = Array.isArray(translations)
+        ? translations
+        : [translations];
+      return translations;
+    } catch (e) {
+      console.log(e);
+      return [""];
+    }
+  }
+
+  try {
+    const newsId = event.pathParameters.newsId;
+    const { url, tag } = JSON.parse(event.body);
+
+    let contents = "";
+    console.log(url);
+
+    if (url.includes("www.bbc.co.uk/sport/av/")) {
+      const { data } = await axios.get(url).catch((e) => {
+        errorCallback(e);
+      });
+
+      const $ = cheerio.load(data);
+      let container = $(".gel-body-copy")
+        .children("div")
+        .find("p")
+        .first()
+        .text();
+      const transHeader = await doTanslate(container);
+      contents = `<div class="header"><p>${transHeader}</p><p class="engSub">${container}</p><span>BBC의 영상 뉴스는 링크에 직접 들어가셔서 시청 가능합니다.</span></div>`;
+
+      const tagCon = `${tag}|영상|본문등재`;
+
+      await news.update(
+        {
+          tag: tagCon,
+          modifiedDate: new Date(),
+        },
+        { where: { id: newsId } }
+      );
+    } else if (!url.includes("www.bbc.co.uk/sport/football")) {
+      contents =
+        "해당 기사는 영상 클립이거나 잘못된 링크를 가지고 있어 본문을 가져오지 못했습니다.";
+    } else {
+      const { data } = await axios.get(url).catch((e) => {
+        errorCallback(e);
+      });
+
+      const $ = cheerio.load(data);
+      let container = $(".qa-story-body");
+
+      const picture = container.find("figure").first().find("img").attr("src");
+
+      if (picture) {
+        const axiosPicture = await axios({
+          url: picture,
+          responseType: "arraybuffer",
+        });
+
+        const key = `${uuid()}.webp`;
+
+        const imageTrans = await image.buffer(axiosPicture.data, {
+          plugins: [webp({ quality: 75 })],
+        });
+
+        const s3Params = {
+          Bucket: "thegreen-limc",
+          Key: key,
+          ContentType: "image/webp",
+          ACL: "public-read",
+          Body: imageTrans,
+        };
+
+        await s3.upload(s3Params).promise();
+
+        contents = `<div class="newsPic"><img src="https://thegreen-limc.s3.ap-northeast-2.amazonaws.com/${key}" /></div>`;
+      }
+
+      if (container.html()) {
+        const contentsArray = container.find("p").slice(0, 5).toArray();
+        const header = $(contentsArray[0]).text();
+        const transHeader = await doTanslate(header);
+        contents = contents.concat(
+          `<div class="header"><p>${transHeader}</p><p class="engSub">${header}</p></div>`
+        );
+        const bodys = contentsArray.slice(1);
+        for (const content of bodys) {
+          const text = $(content).text();
+          const trans = await doTanslate(text);
+          const forConcat = `<div class="pContent"><p>${trans}</p><p class="engSub">${text}</p></div>`;
+          contents = contents.concat(forConcat);
+        }
+
+        const tagCon = picture ? `${tag}|사진|본문등재` : `${tag}$|본문등재`;
+
+        await news.update(
+          {
+            tag: tagCon,
+            modifiedDate: new Date(),
+          },
+          { where: { id: newsId } }
+        );
+      } else {
+        contents =
+          "해당 기사는 영상 클립이거나 잘못된 링크를 가지고 있어 본문을 가져오지 못했습니다.";
+      }
     }
 
     const updated = await newsContents.update(

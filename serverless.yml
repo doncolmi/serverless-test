@@ -45,6 +45,26 @@ functions:
             parameters:
               paths:
                 newsId: true
+  guardianContents:
+    handler: src/crawling.guardianContents
+    events:
+      - http:
+          path: /v1/news/{newsId}/guardian
+          method: post
+          request:
+            parameters:
+              paths:
+                newsId: true
+  bbcContents:
+    handler: src/crawling.bbcContents
+    events:
+      - http:
+          path: /v1/news/{newsId}/bbc
+          method: post
+          request:
+            parameters:
+              paths:
+                newsId: true
   # sync.js
   syncDB:
     handler: src/sync.syncDB
