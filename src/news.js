@@ -193,9 +193,6 @@ module.exports.getNewsContents = async (event, context, callback) => {
   }
 };
 
-// todo: getNewsScore 만들어야합니다!
-// todo: 아직 아래 yml에 등록안함!!
-
 /** @description post newsScore
  * @param {string} uuid Primary Key from user Table
  * @param {number} newsId Primary Key from news Table

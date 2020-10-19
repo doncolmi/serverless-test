@@ -162,6 +162,22 @@ functions:
       - http:
           path: v1/news/reply
           method: post
+  patchReply:
+    handler: src/newsReply.patchReply
+    events:
+      - http:
+          path: v1/news/reply
+          method: patch
+  deleteReply:
+    handler: src/newsReply.deleteReply
+    events:
+      - http:
+          path: v1/news/reply/{id}
+          method: delete
+          request:
+            parameters:
+              paths:
+                id: true
   getReplyScore:
     handler: src/newsReply.getReplyScore
     events:
