@@ -28,6 +28,22 @@ functions:
       - http:
           path: v1/auth/login
           method: get
+  chkName:
+    handler: src/auth.chkName
+    events:
+      - http:
+          path: v1/auth/name
+          method: get
+          request:
+            parameters:
+              querystrings:
+                name: true
+  chgName:
+    handler: src/auth.chgName
+    events:
+      - http:
+          path: v1/auth/name
+          method: patch
   # crawling.js
   crwaling:
     handler: src/crawling.newsCrawling
