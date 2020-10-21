@@ -62,7 +62,7 @@ db.newsEdit.belongsTo(db.user);
 db.newsEdit.belongsTo(db.news);
 
 // newsContents 1:1
-db.newsContents.belongsTo(db.news, { foreignKey: "id" });
+db.newsContents.belongsTo(db.news, { foreignKey: "id", onDelete: "cascade" });
 
 // newsReport 1:Many
 db.user.hasMany(db.newsReport);
@@ -77,7 +77,7 @@ db.newsScore.belongsTo(db.user);
 db.newsScore.belongsTo(db.news);
 
 // userSetting 1:1
-db.UserSetting.belongsTo(db.user, { foreignKey: "uuid" });
+db.UserSetting.belongsTo(db.user, { foreignKey: "uuid", onDelete: "cascade" });
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

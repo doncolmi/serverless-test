@@ -44,6 +44,12 @@ functions:
       - http:
           path: v1/auth/name
           method: patch
+  ExitUser:
+    handler: src/auth.ExitUser
+    events:
+      - http:
+          path: v1/auth
+          method: delete
   # crawling.js
   crwaling:
     handler: src/crawling.newsCrawling

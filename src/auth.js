@@ -45,7 +45,7 @@ module.exports.login = async (event, context, callback) => {
 };
 
 /**
- * get : check duplicate Nickname
+ * get : check duplicate and Validation Nickname
  * @author doncolmi <daeseong0226@gmail.com>
  * @param {string} name - The name of the user want to change
  * @return {boolean} - isDuplicate?
@@ -63,12 +63,14 @@ module.exports.chkName = async (event, context, callback) => {
       });
       return;
     }
+    const regExp = /^[가-힣a-zA-Z0-9]{2,8}$/;
 
-    const isDuplicate = (await user.count({ where: { name: name } })) > 0;
+    const validation = regExp.test(name);
+    const isNotDuplicate = (await user.count({ where: { name: name } })) < 1;
     callback(null, {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(isDuplicate),
+      body: JSON.stringify(validation && isNotDuplicate),
     });
   } catch (e) {
     callback(e);
@@ -135,6 +137,42 @@ module.exports.chgName = async (event, context, callback) => {
         statusCode: 403,
         headers: { "Content-Type": "text/plain" },
         body: "403 - Forbidden",
+      });
+    }
+  } catch (e) {
+    callback(e);
+  }
+};
+
+/**
+ * delete : exit user
+ * @author doncolmi <daeseong0226@gmail.com>
+ * @param {Object[]} event - Contains the request information
+ * @param {string} event.Authorization - token for kakao
+ * @return {boolean} - isDelete?
+ */
+module.exports.ExitUser = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  try {
+    const token = event.headers.Authorization;
+    const tokenHeader = { Authorization: token };
+    const url = `https://kapi.kakao.com/v1/user/access_token_info`;
+    const { data } = await axios.get(url, { headers: tokenHeader });
+
+    const getUser = await user.destroy({ where: { uuid: data.id } });
+
+    if (getUser > 0) {
+      callback(null, {
+        statusCode: 200,
+        headers: { "Content-Type": "text/plain" },
+        body: "회원 탈퇴가 완료되었습니다!",
+      });
+    } else {
+      callback(null, {
+        statusCode: 400,
+        headers: { "Content-Type": "text/plain" },
+        body: "회원 탈퇴 오류입니다. 관리자에게 문의해주세요.",
       });
     }
   } catch (e) {
