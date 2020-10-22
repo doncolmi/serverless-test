@@ -2,6 +2,7 @@
 const axios = require("axios");
 
 const { sequelize, Sequelize } = require("./models");
+const user = require("./models/user/user");
 const news = require("./models/news/news")(sequelize, Sequelize);
 const newsReply = require("./models/news/newsReply")(sequelize, Sequelize);
 const newsReplyScore = require("./models/news/newsReplyScore")(
@@ -9,6 +10,7 @@ const newsReplyScore = require("./models/news/newsReplyScore")(
   Sequelize
 );
 const newsEdit = require("./models/news/newsEdit")(sequelize, Sequelize);
+const db = require("./models/index");
 
 /** @description get Reply Count for Users who don't want to see Reply
  * @param {number} newsId Primary Key from news Table
@@ -39,9 +41,10 @@ module.exports.getReply = async function (event, context, callback) {
 
   try {
     const newsId = event.pathParameters.newsId;
-    const getNews = await newsReply.findAll({
+    const getNews = await db.newsReply.findAll({
       where: { newsId: newsId },
       order: [["createdDate", "ASC"]],
+      include: [{ model: db.user }],
     });
     callback(null, {
       statusCode: 200,
